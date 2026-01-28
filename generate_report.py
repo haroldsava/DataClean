@@ -15,7 +15,7 @@ TARGET_SHEETS = {
     "1  MOBILITATE US (export)": ["NR. CONTRACT"],              # Usually Col J
     "1  REG URBANA US (export)": ["Nr. contract"],              # Usually Col S
     "2  PROIECTE US (export)": ["Nr. contract"],                # Usually Col S
-    "2  PROIECTE US (CF - STRATEGII ": ["NR. CONTRACT", "Nr. contract.1"] # Col L and M
+    "2  PROIECTE US (CF - STRATEGII ": ["NR. CONTRACT"]  # Merged column
 }
 # ---------------------
 
@@ -106,11 +106,15 @@ def generate_html(data, stats, all_exports):
         .inner-tab {{ padding: 8px 16px; background: rgba(255,255,255,0.1); border: none; border-radius: 6px; color: #aaa; cursor: pointer; }}
         .inner-tab.active {{ background: rgba(168,85,247,0.3); color: #a855f7; }}
         .inner-content {{ display: none; }} .inner-content.active {{ display: block; }}
-        table {{ width: 100%; border-collapse: collapse; font-size: 0.85em; }}
-        th {{ background: rgba(168,85,247,0.2); padding: 10px; text-align: left; }}
+        table {{ width: 100%; border-collapse: collapse; font-size: 0.85em; table-layout: auto; }}
+        td:nth-child(2) {{ min-width: 180px; }}
+        th {{ background: rgba(168,85,247,0.9); padding: 10px; text-align: left; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 10; }}
+        th:hover {{ background: rgba(168,85,247,0.4); }}
+        th.sort-asc::after {{ content: ' ▲'; font-size: 0.7em; }}
+        th.sort-desc::after {{ content: ' ▼'; font-size: 0.7em; }}
         td {{ padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }}
         tr:hover {{ background: rgba(255,255,255,0.05); }}
-        .status {{ padding: 3px 8px; border-radius: 12px; font-size: 0.75em; }}
+        .status {{ padding: 3px 8px; border-radius: 12px; font-size: 0.75em; white-space: nowrap; display: inline-block; }}
         .status.valid {{ background: rgba(39,174,96,0.3); color: #2ecc71; }}
         .status.empty {{ background: rgba(243,156,18,0.3); color: #f1c40f; }}
         .status.notfound {{ background: rgba(231,76,60,0.3); color: #e74c3c; }}
@@ -164,7 +168,7 @@ def generate_html(data, stats, all_exports):
             <div id="export{idx}prob" class="inner-content active">
                 <div class="table-wrapper">
                     <table id="table{prefix}Prob">
-                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Sugestie</th><th>Proiect</th></tr></thead>
+                        <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">Cod</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th></tr></thead>
                         <tbody>
 """
         for r in probs:
@@ -178,7 +182,7 @@ def generate_html(data, stats, all_exports):
             <div id="export{idx}valid" class="inner-content">
                 <div class="table-wrapper">
                     <table id="table{prefix}Valid">
-                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Proiect</th></tr></thead>
+                        <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">Cod</th><th onclick="sortTable(this, 4)">Proiect</th></tr></thead>
                         <tbody>
 """
         for r in valids:
@@ -237,6 +241,37 @@ def generate_html(data, stats, all_exports):
             container.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
             document.getElementById('export' + expIdx + type).classList.add('active');
             btn.classList.add('active');
+        }}
+
+        function sortTable(th, colIndex) {{
+            const table = th.closest('table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const headers = table.querySelectorAll('th');
+
+            // Determine sort direction
+            const isAsc = th.classList.contains('sort-asc');
+            headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            th.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
+
+            // Sort rows
+            rows.sort((a, b) => {{
+                let aVal = a.cells[colIndex].textContent.trim();
+                let bVal = b.cells[colIndex].textContent.trim();
+
+                // Try numeric sort for Linie column
+                const aNum = parseFloat(aVal);
+                const bNum = parseFloat(bVal);
+                if (!isNaN(aNum) && !isNaN(bNum)) {{
+                    return isAsc ? bNum - aNum : aNum - bNum;
+                }}
+
+                // String sort
+                return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+            }});
+
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
         }}
     </script>
 </body>
@@ -314,10 +349,10 @@ def main():
                         # Is this project listed as missing contract in registry?
                         if any(fuzz.partial_ratio(proj_val, r_proj) > 90 for r_proj in missing_in_registry):
                             status = "empty"
-                            status_text = "COD CONTRACT NECOMPLETAT IN REGISTRU"
+                            status_text = "NR CONTRACT ABSENT IN REGISTRU SI IN WRIKE"
                         else:
                             status = "empty"
-                            status_text = "COD CONTRACT NECOMPLETAT"
+                            status_text = "NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE"
                         stats['empty'] += 1
                         
                     # 2. Check for Exact Match
@@ -326,11 +361,12 @@ def main():
                             status = "duplicate"
                             status_text = "COD DUPLICAT"
                             stats['duplicate'] += 1
+                            # Keep Wrike name for duplicates
                         else:
                             status = "VALID"
                             status_text = "VALID"
                             stats['valid'] += 1
-                        proj_val = valid_codes[clean_val] # Use Registry name if matched
+                            proj_val = valid_codes[clean_val] # Use Registry name for valid
                         
                     # 3. Check for Typos / Not Found
                     else:
@@ -342,7 +378,7 @@ def main():
                             stats['typo'] += 1
                         else:
                             status = "notfound"
-                            status_text = "COD INEXISTENT IN REGISTRU"
+                            status_text = "NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE"
                             stats['notfound'] += 1
 
                     report_data[display_name].append({
