@@ -65,9 +65,13 @@ def find_project_name_col(df):
             return col
     return df.columns[1] if len(df.columns) > 1 else df.columns[0]
 
-def generate_html(data, stats, all_exports):
+def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_stats=None):
     """Generates the HTML file matching your exact requested design."""
-    
+    if missing_from_wrike is None:
+        missing_from_wrike = []
+    if registry_stats is None:
+        registry_stats = {'total': 0, 'with_contract': 0, 'no_contract': 0, 'found_in_wrike': 0, 'not_in_wrike': 0}
+
     total_valid = sum(s['valid'] for s in stats.values())
     total_dup = sum(s['duplicate'] for s in stats.values())
     total_typo = sum(s['typo'] for s in stats.values())
@@ -136,6 +140,16 @@ def generate_html(data, stats, all_exports):
         .status.typo {{ background: rgba(52,152,219,0.3); color: #3498db; }}
         .status.duplicate {{ background: rgba(155,89,182,0.3); color: #9b59b6; }}
         .table-wrapper {{ max-height: 500px; overflow: auto; }}
+        .registry-summary {{ background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px; }}
+        .registry-summary h3 {{ color: #a855f7; margin-bottom: 15px; font-size: 1.1em; }}
+        .registry-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }}
+        .registry-item {{ background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; text-align: center; }}
+        .registry-item .number {{ font-size: 1.8em; font-weight: bold; color: #fff; }}
+        .registry-item .label {{ font-size: 0.8em; color: #888; margin-top: 5px; }}
+        .registry-item.total {{ border-left: 3px solid #a855f7; }}
+        .registry-item.found {{ border-left: 3px solid #27ae60; }}
+        .registry-item.notfound {{ border-left: 3px solid #e74c3c; }}
+        .registry-item.nocontract {{ border-left: 3px solid #f39c12; }}
         footer {{ text-align: center; padding: 20px; color: #666; font-size: 0.85em; }}
     </style>
 </head>
@@ -156,7 +170,29 @@ def generate_html(data, stats, all_exports):
             </div>
             <div class="chart-container"><canvas id="pieChart" width="250" height="250"></canvas></div>
         </div>
-        
+
+        <div class="registry-summary">
+            <h3>Sumar Registru Contracte</h3>
+            <div class="registry-grid">
+                <div class="registry-item total">
+                    <div class="number">{registry_stats['total']}</div>
+                    <div class="label">Total Proiecte in Registru</div>
+                </div>
+                <div class="registry-item found">
+                    <div class="number">{registry_stats['found_in_wrike']}</div>
+                    <div class="label">Gasite in Wrike</div>
+                </div>
+                <div class="registry-item notfound">
+                    <div class="number">{registry_stats['not_in_wrike']}</div>
+                    <div class="label">Negasite in Wrike</div>
+                </div>
+                <div class="registry-item nocontract">
+                    <div class="number">{registry_stats['no_contract']}</div>
+                    <div class="label">Fara Nr. Contract</div>
+                </div>
+            </div>
+        </div>
+
         <div class="export-tabs">
             <button class="export-tab active" onclick="showExport(-1, this)">📊 MASTER (Toate)</button>
 """
@@ -172,9 +208,9 @@ def generate_html(data, stats, all_exports):
     def render_sheet_content(idx, dataset, is_master=False):
         probs = [d for d in dataset if d['status'] != 'VALID']
         valids = [d for d in dataset if d['status'] == 'VALID']
-        
+
         prefix = 'Master' if is_master else f'Exp{idx}'
-        
+
         tab_html = f"""        <div id="export{idx}" class="export-content {'active' if is_master else ''}">
             <div class="inner-tabs">
                 <button class="inner-tab active" onclick="showInner({idx}, 'prob', this)">Probleme ({len(probs)})</button>
@@ -202,8 +238,9 @@ def generate_html(data, stats, all_exports):
 """
         for r in valids:
             tab_html += f"<tr><td>{r['source']}</td><td><span class='status valid'>VALID</span></td><td>{r['line']}</td><td>{r['code']}</td><td>{r['project']}</td><td>{r['cod_proiect']}</td></tr>\n"
-            
-        tab_html += "                        </tbody></table></div></div></div>\n"
+
+        tab_html += "                        </tbody></table></div></div>\n"
+        tab_html += "        </div>\n"
         return tab_html
 
     # Render Master
@@ -307,14 +344,23 @@ def main():
     
     valid_codes = {}
     missing_in_registry = []
+    no_contract_entries = []  # Registry entries without contract numbers
 
     for index, row in reg_df.iterrows():
         code = clean_text(row[reg_col])
         proj = clean_project_name(row[proj_col])
+        cod_proiect = clean_numeric_code(row['COD PROIECT']) if 'COD PROIECT' in reg_df.columns else ""
         if code:
             valid_codes[code] = proj
         else:
             missing_in_registry.append(proj) # Registry has project but no contract code
+            # Also track these for the report
+            if proj:  # Only if there's a project name
+                no_contract_entries.append({
+                    "code": "-",
+                    "project": proj,
+                    "cod_proiect": cod_proiect if cod_proiect else "-"
+                })
             
     valid_codes_list = list(valid_codes.keys())
 
@@ -336,6 +382,7 @@ def main():
     report_data = {}
     report_stats = {}
     all_exports = []
+    codes_found_in_wrike = set()  # Track which registry codes are found in Wrike
 
     for sheet_name, cols_to_check in TARGET_SHEETS.items():
         if sheet_name not in wrike_sheets:
@@ -386,6 +433,7 @@ def main():
 
                     # 2. Check for Exact Match
                     elif clean_val in valid_codes:
+                        codes_found_in_wrike.add(clean_val)  # Track this code as found
                         if value_counts[clean_val] > 1:
                             status = "duplicate"
                             status_text = "COD DUPLICAT"
@@ -402,6 +450,7 @@ def main():
                     else:
                         match = process.extractOne(clean_val, valid_codes_list, scorer=fuzz.ratio)
                         if match and match[1] >= 85: # 85% similarity threshold
+                            codes_found_in_wrike.add(match[0])  # Track suggested code as found
                             status = "typo"
                             status_text = "POSIBILA EROARE DE TASTARE"
                             suggest = match[0]
@@ -428,7 +477,30 @@ def main():
 
             report_stats[display_name] = stats
 
-    generate_html(report_data, report_stats, all_exports)
+    # Build list of registry entries not found in any Wrike sheet
+    missing_from_wrike = []
+    for code, proj_name in valid_codes.items():
+        if code not in codes_found_in_wrike:
+            missing_from_wrike.append({
+                "code": code,
+                "project": proj_name,
+                "cod_proiect": cod_proiect_map.get(code, "-")
+            })
+
+    # Add registry entries that have no contract number
+    missing_from_wrike.extend(no_contract_entries)
+    print(f"Found {len(missing_from_wrike)} registry entries not in Wrike ({len(no_contract_entries)} without contract number)")
+
+    # Build registry stats for summary
+    registry_stats = {
+        'total': len(valid_codes) + len(no_contract_entries),
+        'with_contract': len(valid_codes),
+        'no_contract': len(no_contract_entries),
+        'found_in_wrike': len(codes_found_in_wrike),
+        'not_in_wrike': len(valid_codes) - len(codes_found_in_wrike)
+    }
+
+    generate_html(report_data, report_stats, all_exports, missing_from_wrike, registry_stats)
 
 if __name__ == "__main__":
     main()

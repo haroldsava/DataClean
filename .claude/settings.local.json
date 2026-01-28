@@ -10,7 +10,13 @@
       "Bash(git -C \"c:\\\\Projects\\\\DataClean\" push -u origin fix/project-name-display)",
       "Bash(git -C \"c:\\\\Projects\\\\DataClean\" gh pr create --title \"Fix project name display in HTML report\" --body \"$\\(cat <<''EOF''\n## Summary\n- Fix the Proiect column showing numeric values \\(like `84000.0`\\) or `nan` instead of actual project names\n- Add `clean_project_name\\(\\)` function to properly handle NaN values\n- Update `find_project_name_col\\(\\)` to prioritize the `Name` column and exclude budget/code columns\n\n## Changes\n- Added `clean_project_name\\(\\)` helper function that handles NaN values\n- Updated `find_project_name_col\\(\\)` to:\n  - Check for `Name` column first \\(Wrike''s project name column\\)\n  - Exclude columns containing ''valoare'' or ''cod'' \\(budget/code columns\\)\n- Applied `clean_project_name` to both registry and Wrike sheet project name reading\n\n## Test plan\n- [ ] Run `python generate_report.py`\n- [ ] Open `raport_master.html` in browser\n- [ ] Verify Proiect column shows actual project names, not numbers\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\nEOF\n\\)\")",
       "Bash(gh pr create:*)",
-      "Bash(python -c:*)"
+      "Bash(python -c:*)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" diff --stat)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" log --oneline -3)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" add generate_report.py raport_master.html)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" commit -m \"$\\(cat <<''EOF''\nAdd COD PROIECT column and improve report formatting\n\n- Add new COD PROIECT column showing project code from registry\n- Rename ''Cod'' column header to ''NR CONTRACT'' for clarity\n- Add clean_numeric_code function to remove unnecessary .0 decimals\n- Update status labels for better clarity:\n  - NR CONTRACT ABSENT IN REGISTRU SI IN WRIKE\n  - NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE  \n  - NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE\n- Show Wrike project name for duplicates instead of registry name\n- Make table headers sticky when scrolling\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" log -1 --stat)",
+      "Bash(python:*)"
     ]
   }
 }

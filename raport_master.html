@@ -46,6 +46,16 @@
         .status.typo { background: rgba(52,152,219,0.3); color: #3498db; }
         .status.duplicate { background: rgba(155,89,182,0.3); color: #9b59b6; }
         .table-wrapper { max-height: 500px; overflow: auto; }
+        .registry-summary { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .registry-summary h3 { color: #a855f7; margin-bottom: 15px; font-size: 1.1em; }
+        .registry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .registry-item { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; text-align: center; }
+        .registry-item .number { font-size: 1.8em; font-weight: bold; color: #fff; }
+        .registry-item .label { font-size: 0.8em; color: #888; margin-top: 5px; }
+        .registry-item.total { border-left: 3px solid #a855f7; }
+        .registry-item.found { border-left: 3px solid #27ae60; }
+        .registry-item.notfound { border-left: 3px solid #e74c3c; }
+        .registry-item.nocontract { border-left: 3px solid #f39c12; }
         footer { text-align: center; padding: 20px; color: #666; font-size: 0.85em; }
     </style>
 </head>
@@ -53,7 +63,7 @@
     <div class="container">
         <header>
             <h1>Raport Master - Multiple Exporturi</h1>
-            <div class="subtitle">4 seturi date | Total: 337 intrari | Generat: 28.01.2026 17:03</div>
+            <div class="subtitle">4 seturi date | Total: 337 intrari | Generat: 28.01.2026 18:01</div>
         </header>
         
         <div class="dashboard">
@@ -66,7 +76,29 @@
             </div>
             <div class="chart-container"><canvas id="pieChart" width="250" height="250"></canvas></div>
         </div>
-        
+
+        <div class="registry-summary">
+            <h3>Sumar Registru Contracte</h3>
+            <div class="registry-grid">
+                <div class="registry-item total">
+                    <div class="number">508</div>
+                    <div class="label">Total Proiecte in Registru</div>
+                </div>
+                <div class="registry-item found">
+                    <div class="number">158</div>
+                    <div class="label">Gasite in Wrike</div>
+                </div>
+                <div class="registry-item notfound">
+                    <div class="number">206</div>
+                    <div class="label">Negasite in Wrike</div>
+                </div>
+                <div class="registry-item nocontract">
+                    <div class="number">144</div>
+                    <div class="label">Fara Nr. Contract</div>
+                </div>
+            </div>
+        </div>
+
         <div class="export-tabs">
             <button class="export-tab active" onclick="showExport(-1, this)">📊 MASTER (Toate)</button>
             <button class="export-tab" onclick="showExport(0, this)">1  MOBILITATE US (export) (Col L/S/J)</button>
@@ -431,7 +463,8 @@
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>160</td><td>28280</td><td>SF sistem tranport ecologic</td><td>255</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>162</td><td>12042</td><td>Consultanta, CF</td><td>405</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>168</td><td>236</td><td>Cerere finnatare</td><td>446</td></tr>
-                        </tbody></table></div></div></div>
+                        </tbody></table></div></div>
+        </div>
         <div id="export0" class="export-content ">
             <div class="inner-tabs">
                 <button class="inner-tab active" onclick="showInner(0, 'prob', this)">Probleme (23)</button>
@@ -542,7 +575,8 @@
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>89</td><td>22857</td><td>SF Trafic Management</td><td>285</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>90</td><td>168</td><td>SF ITS INTEGRAT SMART GREEN MOBILITY</td><td>493</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>91</td><td>29364</td><td>PT, AT si Ex Modernizare parc auto</td><td>359</td></tr>
-                        </tbody></table></div></div></div>
+                        </tbody></table></div></div>
+        </div>
         <div id="export1" class="export-content ">
             <div class="inner-tabs">
                 <button class="inner-tab active" onclick="showInner(1, 'prob', this)">Probleme (16)</button>
@@ -578,7 +612,8 @@
                     <table id="tableExp1Valid">
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Proiect</th><th onclick="sortTable(this, 5)">COD PROIECT</th></tr></thead>
                         <tbody>
-                        </tbody></table></div></div></div>
+                        </tbody></table></div></div>
+        </div>
         <div id="export2" class="export-content ">
             <div class="inner-tabs">
                 <button class="inner-tab active" onclick="showInner(2, 'prob', this)">Probleme (32)</button>
@@ -653,7 +688,8 @@
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>54</td><td>310</td><td>PT CAROL DAVILA</td><td>387</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>55</td><td>34023</td><td>SF UMF</td><td>379</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>56</td><td>10366</td><td>DALI CENTRU PENTRU PERSONAL DIN SISTEMUL PUBLIC - CDCS</td><td>421</td></tr>
-                        </tbody></table></div></div></div>
+                        </tbody></table></div></div>
+        </div>
         <div id="export3" class="export-content ">
             <div class="inner-tabs">
                 <button class="inner-tab active" onclick="showInner(3, 'prob', this)">Probleme (120)</button>
@@ -848,7 +884,8 @@
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>160</td><td>28280</td><td>SF sistem tranport ecologic</td><td>255</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>162</td><td>12042</td><td>Consultanta, CF</td><td>405</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>168</td><td>236</td><td>Cerere finnatare</td><td>446</td></tr>
-                        </tbody></table></div></div></div>
+                        </tbody></table></div></div>
+        </div>
 
         <footer>Validare Contracte v4.0 | 4 analize procesate</footer>
     </div>
