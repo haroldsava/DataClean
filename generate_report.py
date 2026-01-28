@@ -27,13 +27,28 @@ def clean_text(value):
     pattern = r'[\s\-/]*\d{2}\.\d{2}\.\d{4}.*'
     return re.sub(pattern, '', text).strip()
 
+def clean_project_name(value):
+    """Cleans project name, handling NaN values"""
+    if pd.isna(value):
+        return ""
+    text = str(value).strip()
+    if text.lower() in ['nan', 'none']:
+        return ""
+    return text
+
 def find_project_name_col(df):
     """Attempts to find the column containing the Project Name in the user sheet"""
+    # First, check for 'Name' column explicitly (Wrike uses this)
+    if 'Name' in df.columns:
+        return 'Name'
+    # Then check for other keywords, excluding 'valoare' and 'cod' columns
     keywords = ['proiect', 'titlu', 'nume', 'title', 'denumire', 'task']
+    exclude = ['valoare', 'cod', 'value', 'code']
     for col in df.columns:
-        if any(k in str(col).lower() for k in keywords):
+        col_lower = str(col).lower()
+        if any(k in col_lower for k in keywords) and not any(e in col_lower for e in exclude):
             return col
-    return df.columns[1] if len(df.columns) > 1 else df.columns[0] # Fallback to Col B
+    return df.columns[1] if len(df.columns) > 1 else df.columns[0]
 
 def generate_html(data, stats, all_exports):
     """Generates the HTML file matching your exact requested design."""
@@ -245,7 +260,7 @@ def main():
 
     for index, row in reg_df.iterrows():
         code = clean_text(row[reg_col])
-        proj = str(row[proj_col])
+        proj = clean_project_name(row[proj_col])
         if code:
             valid_codes[code] = proj
         else:
@@ -288,7 +303,7 @@ def main():
                 for idx, row in df.iterrows():
                     raw_val = row[col_name]
                     clean_val = clean_text(raw_val)
-                    proj_val = str(row[proj_name_col]) if proj_name_col in df.columns else "N/A"
+                    proj_val = clean_project_name(row[proj_name_col]) if proj_name_col in df.columns else ""
                     
                     status = ""
                     status_text = ""
