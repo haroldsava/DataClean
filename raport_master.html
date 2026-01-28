@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raport Master - Multiple Exporturi</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height: 100vh; color: #eee; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        header { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        h1 { color: #a855f7; font-size: 1.8em; }
+        .subtitle { color: #888; font-size: 0.9em; margin-top: 5px; }
+        .dashboard { display: grid; grid-template-columns: 1fr 300px; gap: 20px; margin-bottom: 20px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid; }
+        .card.valid { border-color: #27ae60; } .card.empty { border-color: #f39c12; }
+        .card.notfound { border-color: #e74c3c; } .card.typo { border-color: #3498db; } .card.duplicate { border-color: #9b59b6; }
+        .card h2 { font-size: 2.5em; margin-bottom: 5px; }
+        .card .pct { font-size: 0.9em; color: #888; }
+        .card p { color: #aaa; font-size: 0.85em; }
+        .chart-container { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; }
+        .export-tabs { display: flex; gap: 5px; margin-bottom: 0; flex-wrap: wrap; }
+        .export-tab { padding: 12px 20px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px 8px 0 0; color: #aaa; cursor: pointer; }
+        .export-tab.active { background: linear-gradient(135deg, #a855f7, #6366f1); color: white; }
+        .export-content { display: none; background: rgba(255,255,255,0.05); border-radius: 0 12px 12px 12px; padding: 20px; }
+        .export-content.active { display: block; }
+        .inner-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .inner-tab { padding: 8px 16px; background: rgba(255,255,255,0.1); border: none; border-radius: 6px; color: #aaa; cursor: pointer; }
+        .inner-tab.active { background: rgba(168,85,247,0.3); color: #a855f7; }
+        .inner-content { display: none; } .inner-content.active { display: block; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        th { background: rgba(168,85,247,0.2); padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        tr:hover { background: rgba(255,255,255,0.05); }
+        .status { padding: 3px 8px; border-radius: 12px; font-size: 0.75em; }
+        .status.valid { background: rgba(39,174,96,0.3); color: #2ecc71; }
+        .status.empty { background: rgba(243,156,18,0.3); color: #f1c40f; }
+        .status.notfound { background: rgba(231,76,60,0.3); color: #e74c3c; }
+        .status.typo { background: rgba(52,152,219,0.3); color: #3498db; }
+        .status.duplicate { background: rgba(155,89,182,0.3); color: #9b59b6; }
+        .table-wrapper { max-height: 500px; overflow: auto; }
+        footer { text-align: center; padding: 20px; color: #666; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Raport Master - Multiple Exporturi</h1>
+            <div class="subtitle">5 seturi date | Total: 512 intrari | Generat: 28.01.2026 12:47</div>
+        </header>
+        
+        <div class="dashboard">
+            <div class="cards">
+                <div class="card valid"><h2 id="statValid">166</h2><div class="pct" id="pctValid">32.4%</div><p>Coduri Valide</p></div>
+                <div class="card duplicate"><h2 id="statDuplicate">2</h2><div class="pct" id="pctDuplicate">0.4%</div><p>Duplicate</p></div>
+                <div class="card typo"><h2 id="statTypo">23</h2><div class="pct" id="pctTypo">4.5%</div><p>Posibile Erori</p></div>
+                <div class="card empty"><h2 id="statEmpty">272</h2><div class="pct" id="pctEmpty">53.1%</div><p>Necompletate</p></div>
+                <div class="card notfound"><h2 id="statNotfound">49</h2><div class="pct" id="pctNotfound">9.6%</div><p>Inexistente</p></div>
+            </div>
+            <div class="chart-container"><canvas id="pieChart" width="250" height="250"></canvas></div>
+        </div>
+        
+        <div class="export-tabs">
+            <button class="export-tab active" onclick="showExport(-1, this)">📊 MASTER (Toate)</button>
+            <button class="export-tab" onclick="showExport(0, this)">1  MOBILITATE US (export) (Col L/S/J)</button>
+            <button class="export-tab" onclick="showExport(1, this)">1  REG URBANA US (export) (Col L/S/J)</button>
+            <button class="export-tab" onclick="showExport(2, this)">2  PROIECTE US (export) (Col L/S/J)</button>
+            <button class="export-tab" onclick="showExport(3, this)">2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</button>
+            <button class="export-tab" onclick="showExport(4, this)">2  PROIECTE US (CF - STRATEGII  (Col M)</button>
+        </div>
+
+        <div id="export-1" class="export-content active">
+            <div class="inner-tabs">
+                <button class="inner-tab active" onclick="showInner(-1, 'prob', this)">Probleme (346)</button>
+                <button class="inner-tab" onclick="showInner(-1, 'valid', this)">Valide (166)</button>
+            </div>
+            <div id="export-1prob" class="inner-content active">
+                <div class="table-wrapper">
+                    <table id="tableMasterProb">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Sugestie</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>13</td><td>CDSF4301</td><td>CDSF04301</td><td>218000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>15</td><td>CDSF0108</td><td></td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>17</td><td>CDSF0508</td><td>CDSF0508_</td><td>472300.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>34</td><td>106.066</td><td>106066</td><td>26423.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>147058</td><td>147.058</td><td>270000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>43</td><td>2023/s 139-445422</td><td>2023/S 139-445422</td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>45</td><td>264</td><td></td><td>84000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>53</td><td>16</td><td></td><td>125000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>54</td><td>12598</td><td></td><td>119000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>59</td><td>4866</td><td></td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>61</td><td></td><td></td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>62</td><td>1-7633</td><td></td><td>480000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>63</td><td>35889</td><td></td><td>5296376.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>64</td><td>1151/17.09.2025</td><td>12151</td><td>82600.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>67</td><td>49</td><td></td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>73</td><td>493</td><td></td><td>270000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>74</td><td>495</td><td>4795</td><td>270000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>75</td><td>494</td><td></td><td>269000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>76</td><td>491</td><td></td><td>269000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>79</td><td>2/137516</td><td>137516</td><td>1239381.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>82</td><td>8810</td><td></td><td>Consultanta PNRR</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>85</td><td>8810</td><td></td><td>Consultanta PNRR</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>92</td><td>7610</td><td></td><td>nan</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>2</td><td></td><td></td><td>27500.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>3</td><td>176240.0</td><td>176240</td><td>270000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>4</td><td>160323.0</td><td>160323</td><td>134000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>5</td><td>16244.0</td><td></td><td>531300.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>6</td><td>16850.0</td><td></td><td>270000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>7</td><td>218424.0</td><td></td><td>610932.03</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>8</td><td>96.0</td><td></td><td>262000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>9</td><td>98726.0</td><td></td><td>198000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>10</td><td>369.0</td><td></td><td>nan</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>11</td><td>148799.0</td><td>148799</td><td>8046030.87</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>12</td><td>152515.0</td><td>152515</td><td>1808750.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>13</td><td>43683.0</td><td></td><td>99000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>14</td><td>91670.0</td><td></td><td>160000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>15</td><td></td><td></td><td>120000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>16</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>17</td><td>1478.0</td><td></td><td>230000.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>2</td><td>1320/01</td><td></td><td>786240.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>4</td><td>8599</td><td></td><td>129500.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>7</td><td>Q213.00_0707.D</td><td></td><td>83000.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>12</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>13</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>14</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>15</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>16</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>17</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>18</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>19</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>20</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>21</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>22</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>23</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>24</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>25</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>26</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>27</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>28</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>29</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>32</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>33</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>34</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>35</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>36</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>80/149560/</td><td>80/149560</td><td>131380.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>40</td><td></td><td></td><td>131000.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>47</td><td>2/137516</td><td>137516</td><td>442493.75</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>48</td><td>2/137516</td><td>137516</td><td>239040.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>51</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>53</td><td>144-13476-RU13477</td><td></td><td>265000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>2</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>3</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>5</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>6</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>7</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>9</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>10</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>11</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>12</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>14</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>15</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>16</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>17</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>18</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>19</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>20</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>21</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>23</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>27</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>29</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>31</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>32</td><td>01/24</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>33</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>35</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>37</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>39</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>41</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>42</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>43</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>45</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>46</td><td>144/213984/213985</td><td>144/213984/2/3985</td><td>103500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>47</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>48</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>49</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>50</td><td>145/6870/68702</td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>52</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>53</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>54</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>55</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>56</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>57</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>58</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>59</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>60</td><td></td><td></td><td>165000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>62</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>68</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>70</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>71</td><td>01/24</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>72</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>75</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>76</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>77</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>78</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>80</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>81</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>82</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>83</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>84</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>85</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>86</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>87</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>88</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>89</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>90</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>91</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>93</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>94</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>95</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>98</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>99</td><td>141/200203</td><td></td><td>176000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>100</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>101</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>102</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>103</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>104</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>106</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>109</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>110</td><td>492</td><td></td><td>189000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>111</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>112</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>115</td><td>276768</td><td></td><td>31000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>118</td><td>276795</td><td></td><td>69000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>119</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>120</td><td>0</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>121</td><td>241</td><td>7241</td><td>50000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>122</td><td>241</td><td>7241</td><td>50000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>123</td><td>139704</td><td></td><td>150000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>124</td><td>0</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>125</td><td>48/145223</td><td>48 145223</td><td>235000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>126</td><td>48/145228</td><td></td><td>240000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>129</td><td>04/136669</td><td></td><td>7500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>135</td><td>0</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>136</td><td>195/214286</td><td>195-214286</td><td>60000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>137</td><td>136718</td><td></td><td>30000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>140</td><td>0</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>141</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>142</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>143</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>145</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>146</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>147</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>148</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>149</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>150</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>151</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>153</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>155</td><td>5870</td><td></td><td>92000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>156</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>157</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>161</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>163</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>164</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>165</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>166</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>167</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>169</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>170</td><td>01/24</td><td></td><td>2500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>171</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>172</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>173</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>174</td><td></td><td></td><td>44200.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>175</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>176</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>2</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>3</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>4</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>5</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>6</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>7</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>9</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>10</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>11</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>12</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>13</td><td></td><td></td><td>260000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>14</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>15</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>16</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>17</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>18</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>19</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>20</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>21</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>22</td><td></td><td></td><td>98000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>23</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>27</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>28</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>29</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>30</td><td></td><td></td><td>40000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>31</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>32</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>33</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>34</td><td></td><td></td><td>170000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>35</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>37</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>39</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>40</td><td></td><td></td><td>100000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>41</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>43</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>45</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>46</td><td>144/213984/213985</td><td>144/213984/2/3985</td><td>103500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>47</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>48</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>49</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>50</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>52</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>53</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>54</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>55</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>56</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>57</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>58</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>59</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>60</td><td></td><td></td><td>165000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>61</td><td></td><td></td><td>204130.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>62</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>63</td><td></td><td></td><td>80000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>64</td><td></td><td></td><td>60000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>65</td><td></td><td></td><td>151000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>66</td><td></td><td></td><td>123000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>67</td><td></td><td></td><td>60000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>68</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>69</td><td>170460</td><td></td><td>250000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>70</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>71</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>72</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>73</td><td></td><td></td><td>58600.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>75</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>77</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>78</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>79</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>80</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>81</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>82</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>83</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>84</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>85</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>86</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>87</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>88</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>89</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>90</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>91</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>93</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>94</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>95</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>96</td><td></td><td></td><td>124000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>97</td><td></td><td></td><td>120000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>98</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>99</td><td>141/200203</td><td></td><td>176000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>100</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>101</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>102</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>103</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>104</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>105</td><td></td><td></td><td>90000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>106</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>107</td><td></td><td></td><td>97000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>108</td><td></td><td></td><td>180000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>109</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>110</td><td></td><td></td><td>189000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>111</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>112</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>113</td><td></td><td></td><td>190000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>114</td><td></td><td></td><td>130000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>115</td><td></td><td></td><td>31000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>116</td><td></td><td></td><td>235000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>117</td><td></td><td></td><td>265000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>118</td><td></td><td></td><td>69000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>119</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>120</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>121</td><td>241/20021</td><td>241/200201</td><td>50000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>122</td><td>241/20021</td><td>241/200201</td><td>50000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>124</td><td>-</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>125</td><td></td><td></td><td>235000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>126</td><td></td><td></td><td>240000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>129</td><td>04/136669</td><td></td><td>7500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>135</td><td>-</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>136</td><td></td><td></td><td>60000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>137</td><td>136718</td><td></td><td>30000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>138</td><td></td><td></td><td>7447.55</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>139</td><td></td><td></td><td>749991.33</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>140</td><td>-</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>141</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>142</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>143</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>144</td><td></td><td></td><td>67000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>145</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>146</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>147</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>148</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>149</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>150</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>151</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>152</td><td></td><td></td><td>357252.74</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>153</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>154</td><td></td><td></td><td>49000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>155</td><td></td><td></td><td>92000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>156</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>157</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>161</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>162</td><td></td><td></td><td>135000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>163</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>164</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>165</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>166</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>167</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>168</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>169</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>170</td><td></td><td></td><td>2500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>171</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>172</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>173</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>174</td><td></td><td></td><td>44200.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>175</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>176</td><td></td><td></td><td>nan</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="export-1valid" class="inner-content">
+                <div class="table-wrapper">
+                    <table id="tableMasterValid">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>2</td><td>66326</td><td>SF Dezvoltare sistem management urban</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>3</td><td>16779</td><td>SF, PT TICKETING</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>4</td><td>5971</td><td>SO ticketing</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>5</td><td>4201</td><td>Proiectare si asistenta tehnica trafic management</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>6</td><td>2935</td><td>Consultanta expert cooptat</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>7</td><td>7025</td><td>MP modernizare transport public prin achizitie de autobuze oras Bucecea</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>4754</td><td>Proiectare, asistenta si furnizare Centru integrat de mobilitate urbana ITS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>9</td><td>15327</td><td>SF centru integrat de Mobilitate Urbana</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>10</td><td>15329</td><td>SF statii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>11</td><td>289178</td><td>SO, ST</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>12</td><td>839</td><td>SF ITS statii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>14</td><td>172/195966</td><td>Acord cadru, contract subsecvent 7 statii incarcare</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>16</td><td>CDSF02261</td><td>ST Planseu unirii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>18</td><td>101</td><td>SF camere LPR</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>19</td><td>169</td><td>DALI crestere siguranta rutiera</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>20</td><td>87</td><td>SO Achizitie autobuze</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>21</td><td>140450</td><td>DALI PASAJ DRAGAICA</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>22</td><td>102160</td><td>DALI Pasaj Nehoiasu</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>23</td><td>126877</td><td>PMUD GIS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>24</td><td>76263</td><td>SF Air City</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>25</td><td>131975</td><td>SF E-Track</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>26</td><td>212729</td><td>SF parcari</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>27</td><td>2</td><td>SO delegare transport public</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>28</td><td>196577</td><td>SO platforma electronica</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>29</td><td>182393</td><td>SO Autobuze</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>30</td><td>187125</td><td>SO Microbuze</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>31</td><td>152528</td><td>ST Pasaj Aurel Vlaicu</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>32</td><td>162488</td><td>DALI, PT HUB</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>33</td><td>160318</td><td>ACTUALIZARE POAT MOBILITATE URBANA</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>35</td><td>119408</td><td>SF, PT TM SI PARCARE</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>36</td><td>160314</td><td>ACTUALIARE STUDIU TRAFIC</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>37</td><td>14098</td><td>DALI, PT Mob Urbana transport</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>39</td><td>21012</td><td>SO delegare transport public</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>40</td><td>12101</td><td>SF Digitalizare TP</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>41</td><td>41693</td><td>ITS etapa 2</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>42</td><td>22237</td><td>SO DELEGARE TP</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>44</td><td>110889</td><td>studiu de trafic</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>46</td><td>37958</td><td>PT, AT rest lucrari zona pietonala centrala</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>47</td><td>129470</td><td>PROIECTARE AUTOBAZA</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>48</td><td>203726</td><td>SF STATII INCARCARE</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>49</td><td>8887</td><td>Studiu de obstacolare</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>50</td><td>37907</td><td>SF SI PT CORIDOR DE MOBILITATE POAT</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>51</td><td>31252</td><td>ITS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>52</td><td>21702</td><td>SF ITS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>55</td><td>17611</td><td>Optimizare coridor Nord-Sud</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>56</td><td>153782</td><td>studii trafic</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>57</td><td>147</td><td>SF Centru Integrat de Mobilitate Urbana</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>58</td><td>20134</td><td>Proiectare si asistenta tehnica autobaza</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>60</td><td>2545</td><td>SF modernizare TP</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>65</td><td>31052</td><td>SO achizitie autobuze</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>66</td><td>263</td><td>SF sistem inteligent urban Reghin</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>68</td><td>21295</td><td>Sf sistem informatic</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>69</td><td>J-AC 274</td><td>DALI Cresterea sigurantei rutiere cartier Baneasa</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>70</td><td>J-AC 271</td><td>DALI Cresterea sigurantei rutiere cartier Bucurestii Noi</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>71</td><td>J-AC 273</td><td>DALI Cresterea sigurantei rutiere cartier Grivita</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>72</td><td>J-AC 272</td><td>DALI Cresterea sigurantei rutiere cartier Piata Romana</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>77</td><td>173/206845</td><td> SO SMART CITY</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>78</td><td>115/177171</td><td>SO statii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>80</td><td>105</td><td>ST si CF Calea Surii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>81</td><td>643</td><td>Proiectare si consultanta accesare fonduri terminal intermodal port</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>83</td><td>28280</td><td>SF sistem tranport ecologic</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>84</td><td>33887</td><td>consultanta,SF,PT infrastructura transport verd-ITS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>86</td><td>24633</td><td>SF ITS Runda 1</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>87</td><td>24634</td><td>SF ITS Runda 2</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>88</td><td>19222</td><td>PT Trafic Management</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>89</td><td>22857</td><td>SF Trafic Management</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>90</td><td>168</td><td>SF ITS INTEGRAT SMART GREEN MOBILITY</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>91</td><td>29364</td><td>PT, AT si Ex Modernizare parc auto</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>3</td><td>36674</td><td>DALI pietonal</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>5</td><td>58</td><td>Expertiza tehnica si DALI sediul administratiei C1-C6</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>6</td><td>30</td><td>Proiectare si executie campus</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>103</td><td>DALI Raza de soare</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>9</td><td>104</td><td>DALI Scoala 2</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>10</td><td>88</td><td>SF Autobaza</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>11</td><td>100719</td><td>proiectare Campus</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>30</td><td>30509</td><td>Proiectare autobaza</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>31</td><td>31/C</td><td>DALI HVAC</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>37</td><td>100939</td><td>PT CAV</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>39</td><td>7955</td><td>DALI Gradina publica si parcare</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>41</td><td>8869</td><td>SF cu elemente DALI constructii civile programe screening</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>42</td><td>6873</td><td>Spitalul Horezu</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>43</td><td>9940</td><td>SF, DTAC, DTOE centru ingrijiri paleative</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>44</td><td>227342</td><td>PT si Ex CAV FAZA 1</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>45</td><td>149/167011</td><td>proiectare si executie cladiri nZEB</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>46</td><td>146/165285</td><td>Acord subsecvent 4 la acord cadru 137516 - 13 septembrie</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>49</td><td>284/134075</td><td>SF CAV mare</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>50</td><td>47/37457</td><td>SF CAV</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>52</td><td>115632</td><td>SF CAV</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>54</td><td>310</td><td>PT CAROL DAVILA</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>55</td><td>34023</td><td>SF UMF</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>56</td><td>10366</td><td>DALI CENTRU PENTRU PERSONAL DIN SISTEMUL PUBLIC - CDCS</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>4</td><td>100</td><td>Consultanta PR BI P3/3.2/1/2025 eficienta energetica cladiri publica</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>7025</td><td>MP modernizare transport public prin achizitie de autobuze oras Bucecea</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>13</td><td>225527</td><td>MP HUB</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>22</td><td>33289</td><td>CF autobaza</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>24</td><td>23600</td><td>MP achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>25</td><td>15796</td><td>MP ITS</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>26</td><td>37511</td><td>MP Digitalizare TP etapa II</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>28</td><td>22237</td><td>SO DELEGARE TP</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>30</td><td>CDSF0903</td><td>CF gradinita 242</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>34</td><td>31860</td><td>Consultanta monument istoric Fortul 13 Jilava</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>36</td><td>41721</td><td>CF Achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>38</td><td>54043</td><td>Consultanta achiziie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>40</td><td>23455</td><td>Consultanta program incluziune si demnitate sociala</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>44</td><td>144/81296/81297</td><td>finantare panouri fotovoltaice</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>51</td><td>144/107416/107417</td><td>Consultanta accesare fonduri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>61</td><td>91656</td><td>SO fundamentare centru comercial, parcari</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>63</td><td>121920</td><td>MP Colegiul Elena Doamna C16</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>64</td><td>101625</td><td>MP Colegiul Elena Doamnei</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>65</td><td>191162</td><td>Consultanta management proiect Modernizare Depou de tramvaie etapa 1</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>66</td><td>205926</td><td>Consultanta management proiect Modernizare Depou de tramvaie etapa 2</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>67</td><td>101621</td><td>MP Gradinita 1</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>69</td><td>170450</td><td>100 orase</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>73</td><td>5233</td><td>SIDU</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>74</td><td>2550</td><td>CF modernizare TP</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>79</td><td>23728</td><td>Consultanta infrastructura transport nemotorizat</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>92</td><td>31052</td><td>SO achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>96</td><td>19281</td><td>CF PARAU DAMBU</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>97</td><td>10115</td><td>Consultanta centru ingrijiri paleative</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>105</td><td>20616</td><td>Cerere finantare</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>107</td><td>143</td><td>Consultanta accesare fonduri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>108</td><td>189</td><td>consultanta fonduri Strategic projects under the critical raw materials ac</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>113</td><td>116193</td><td>Consultanta eficienta energetica cladiri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>114</td><td>99283</td><td>Consultanta regenerare urbana</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>116</td><td>38921</td><td>ASISTENTA TEHNICA CONSULTARE PUBLICA POR ZONE URBANE</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>117</td><td>38629</td><td>ASISTENTA TEHNICA CONSULTARE PUBLICA POR INFRASTRUCTURA AGREMENT</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>127</td><td>144802</td><td>CF  Gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>128</td><td>27/151030</td><td>Analiza DNSH Gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>130</td><td>250/207060</td><td>analiza DNSH</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>131</td><td>165/172800</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>132</td><td>167/172807</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>133</td><td>168/172809</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>134</td><td>166/172803</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>138</td><td>161/184449</td><td>MP gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>139</td><td>51/158930</td><td>Dotari scoli</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>144</td><td>105</td><td>ST si CF Calea Surii</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>152</td><td>643</td><td>Proiectare si consultanta accesare fonduri terminal intermodal port</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>154</td><td>11019</td><td>Cerere finantare</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>158</td><td>5975</td><td>Consultanta</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>159</td><td>8121</td><td>MP Proiectare sistem inteligent de planificare a calatoriilor cu transportul public </td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>160</td><td>28280</td><td>SF sistem tranport ecologic</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>162</td><td>12042</td><td>Consultanta, CF </td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>168</td><td>236</td><td>Cerere finnatare</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>7025</td><td>MP modernizare transport public prin achizitie de autobuze oras Bucecea</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>24</td><td>23600</td><td>MP achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>25</td><td>15796</td><td>MP ITS</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>26</td><td>37511</td><td>MP Digitalizare TP etapa II</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>36</td><td>41721</td><td>CF Achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>38</td><td>54043</td><td>Consultanta achiziie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>42</td><td>43577</td><td>Asistenta tehnica achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>44</td><td>144/81296/81297</td><td>finantare panouri fotovoltaice</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>51</td><td>144/107416/107417</td><td>Consultanta accesare fonduri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>74</td><td>2550</td><td>CF modernizare TP</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>76</td><td>80145</td><td>Consultanta E-Ticketing</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>92</td><td>31052</td><td>SO achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>123</td><td>07/139704</td><td>CF Unitati invatamant</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>127</td><td>144802</td><td>CF  Gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>128</td><td>27/151030</td><td>Analiza DNSH Gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>130</td><td>250/207060</td><td>analiza DNSH</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>131</td><td>165/172800</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>132</td><td>167/172807</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>133</td><td>168/172809</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>134</td><td>166/172803</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>158</td><td>5975</td><td>Consultanta</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>159</td><td>8121</td><td>MP Proiectare sistem inteligent de planificare a calatoriilor cu transportul public </td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>160</td><td>28280</td><td>SF sistem tranport ecologic</td></tr>
+                        </tbody></table></div></div></div>
+        <div id="export0" class="export-content ">
+            <div class="inner-tabs">
+                <button class="inner-tab active" onclick="showInner(0, 'prob', this)">Probleme (23)</button>
+                <button class="inner-tab" onclick="showInner(0, 'valid', this)">Valide (68)</button>
+            </div>
+            <div id="export0prob" class="inner-content active">
+                <div class="table-wrapper">
+                    <table id="tableExp0Prob">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Sugestie</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>13</td><td>CDSF4301</td><td>CDSF04301</td><td>218000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>15</td><td>CDSF0108</td><td></td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>17</td><td>CDSF0508</td><td>CDSF0508_</td><td>472300.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>34</td><td>106.066</td><td>106066</td><td>26423.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>147058</td><td>147.058</td><td>270000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>43</td><td>2023/s 139-445422</td><td>2023/S 139-445422</td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>45</td><td>264</td><td></td><td>84000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>53</td><td>16</td><td></td><td>125000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>54</td><td>12598</td><td></td><td>119000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>59</td><td>4866</td><td></td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>61</td><td></td><td></td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>62</td><td>1-7633</td><td></td><td>480000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>63</td><td>35889</td><td></td><td>5296376.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>64</td><td>1151/17.09.2025</td><td>12151</td><td>82600.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>67</td><td>49</td><td></td><td>nan</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>73</td><td>493</td><td></td><td>270000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>74</td><td>495</td><td>4795</td><td>270000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>75</td><td>494</td><td></td><td>269000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>76</td><td>491</td><td></td><td>269000.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>79</td><td>2/137516</td><td>137516</td><td>1239381.0</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>82</td><td>8810</td><td></td><td>Consultanta PNRR</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>85</td><td>8810</td><td></td><td>Consultanta PNRR</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>92</td><td>7610</td><td></td><td>nan</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="export0valid" class="inner-content">
+                <div class="table-wrapper">
+                    <table id="tableExp0Valid">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>2</td><td>66326</td><td>SF Dezvoltare sistem management urban</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>3</td><td>16779</td><td>SF, PT TICKETING</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>4</td><td>5971</td><td>SO ticketing</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>5</td><td>4201</td><td>Proiectare si asistenta tehnica trafic management</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>6</td><td>2935</td><td>Consultanta expert cooptat</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>7</td><td>7025</td><td>MP modernizare transport public prin achizitie de autobuze oras Bucecea</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>4754</td><td>Proiectare, asistenta si furnizare Centru integrat de mobilitate urbana ITS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>9</td><td>15327</td><td>SF centru integrat de Mobilitate Urbana</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>10</td><td>15329</td><td>SF statii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>11</td><td>289178</td><td>SO, ST</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>12</td><td>839</td><td>SF ITS statii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>14</td><td>172/195966</td><td>Acord cadru, contract subsecvent 7 statii incarcare</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>16</td><td>CDSF02261</td><td>ST Planseu unirii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>18</td><td>101</td><td>SF camere LPR</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>19</td><td>169</td><td>DALI crestere siguranta rutiera</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>20</td><td>87</td><td>SO Achizitie autobuze</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>21</td><td>140450</td><td>DALI PASAJ DRAGAICA</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>22</td><td>102160</td><td>DALI Pasaj Nehoiasu</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>23</td><td>126877</td><td>PMUD GIS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>24</td><td>76263</td><td>SF Air City</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>25</td><td>131975</td><td>SF E-Track</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>26</td><td>212729</td><td>SF parcari</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>27</td><td>2</td><td>SO delegare transport public</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>28</td><td>196577</td><td>SO platforma electronica</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>29</td><td>182393</td><td>SO Autobuze</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>30</td><td>187125</td><td>SO Microbuze</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>31</td><td>152528</td><td>ST Pasaj Aurel Vlaicu</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>32</td><td>162488</td><td>DALI, PT HUB</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>33</td><td>160318</td><td>ACTUALIZARE POAT MOBILITATE URBANA</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>35</td><td>119408</td><td>SF, PT TM SI PARCARE</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>36</td><td>160314</td><td>ACTUALIARE STUDIU TRAFIC</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>37</td><td>14098</td><td>DALI, PT Mob Urbana transport</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>39</td><td>21012</td><td>SO delegare transport public</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>40</td><td>12101</td><td>SF Digitalizare TP</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>41</td><td>41693</td><td>ITS etapa 2</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>42</td><td>22237</td><td>SO DELEGARE TP</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>44</td><td>110889</td><td>studiu de trafic</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>46</td><td>37958</td><td>PT, AT rest lucrari zona pietonala centrala</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>47</td><td>129470</td><td>PROIECTARE AUTOBAZA</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>48</td><td>203726</td><td>SF STATII INCARCARE</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>49</td><td>8887</td><td>Studiu de obstacolare</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>50</td><td>37907</td><td>SF SI PT CORIDOR DE MOBILITATE POAT</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>51</td><td>31252</td><td>ITS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>52</td><td>21702</td><td>SF ITS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>55</td><td>17611</td><td>Optimizare coridor Nord-Sud</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>56</td><td>153782</td><td>studii trafic</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>57</td><td>147</td><td>SF Centru Integrat de Mobilitate Urbana</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>58</td><td>20134</td><td>Proiectare si asistenta tehnica autobaza</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>60</td><td>2545</td><td>SF modernizare TP</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>65</td><td>31052</td><td>SO achizitie autobuze</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>66</td><td>263</td><td>SF sistem inteligent urban Reghin</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>68</td><td>21295</td><td>Sf sistem informatic</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>69</td><td>J-AC 274</td><td>DALI Cresterea sigurantei rutiere cartier Baneasa</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>70</td><td>J-AC 271</td><td>DALI Cresterea sigurantei rutiere cartier Bucurestii Noi</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>71</td><td>J-AC 273</td><td>DALI Cresterea sigurantei rutiere cartier Grivita</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>72</td><td>J-AC 272</td><td>DALI Cresterea sigurantei rutiere cartier Piata Romana</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>77</td><td>173/206845</td><td> SO SMART CITY</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>78</td><td>115/177171</td><td>SO statii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>80</td><td>105</td><td>ST si CF Calea Surii</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>81</td><td>643</td><td>Proiectare si consultanta accesare fonduri terminal intermodal port</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>83</td><td>28280</td><td>SF sistem tranport ecologic</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>84</td><td>33887</td><td>consultanta,SF,PT infrastructura transport verd-ITS</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>86</td><td>24633</td><td>SF ITS Runda 1</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>87</td><td>24634</td><td>SF ITS Runda 2</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>88</td><td>19222</td><td>PT Trafic Management</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>89</td><td>22857</td><td>SF Trafic Management</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>90</td><td>168</td><td>SF ITS INTEGRAT SMART GREEN MOBILITY</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>91</td><td>29364</td><td>PT, AT si Ex Modernizare parc auto</td></tr>
+                        </tbody></table></div></div></div>
+        <div id="export1" class="export-content ">
+            <div class="inner-tabs">
+                <button class="inner-tab active" onclick="showInner(1, 'prob', this)">Probleme (16)</button>
+                <button class="inner-tab" onclick="showInner(1, 'valid', this)">Valide (0)</button>
+            </div>
+            <div id="export1prob" class="inner-content active">
+                <div class="table-wrapper">
+                    <table id="tableExp1Prob">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Sugestie</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>2</td><td></td><td></td><td>27500.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>3</td><td>176240.0</td><td>176240</td><td>270000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>4</td><td>160323.0</td><td>160323</td><td>134000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>5</td><td>16244.0</td><td></td><td>531300.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>6</td><td>16850.0</td><td></td><td>270000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>7</td><td>218424.0</td><td></td><td>610932.03</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>8</td><td>96.0</td><td></td><td>262000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>9</td><td>98726.0</td><td></td><td>198000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>10</td><td>369.0</td><td></td><td>nan</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>11</td><td>148799.0</td><td>148799</td><td>8046030.87</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>12</td><td>152515.0</td><td>152515</td><td>1808750.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>13</td><td>43683.0</td><td></td><td>99000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>14</td><td>91670.0</td><td></td><td>160000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>15</td><td></td><td></td><td>120000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>16</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>17</td><td>1478.0</td><td></td><td>230000.0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="export1valid" class="inner-content">
+                <div class="table-wrapper">
+                    <table id="tableExp1Valid">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Proiect</th></tr></thead>
+                        <tbody>
+                        </tbody></table></div></div></div>
+        <div id="export2" class="export-content ">
+            <div class="inner-tabs">
+                <button class="inner-tab active" onclick="showInner(2, 'prob', this)">Probleme (32)</button>
+                <button class="inner-tab" onclick="showInner(2, 'valid', this)">Valide (23)</button>
+            </div>
+            <div id="export2prob" class="inner-content active">
+                <div class="table-wrapper">
+                    <table id="tableExp2Prob">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Sugestie</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>2</td><td>1320/01</td><td></td><td>786240.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>4</td><td>8599</td><td></td><td>129500.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>7</td><td>Q213.00_0707.D</td><td></td><td>83000.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>12</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>13</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>14</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>15</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>16</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>17</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>18</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>19</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>20</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>21</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>22</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>23</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>24</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>25</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>26</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>27</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>28</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>29</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>32</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>33</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>34</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>35</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>36</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>80/149560/</td><td>80/149560</td><td>131380.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>40</td><td></td><td></td><td>131000.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>47</td><td>2/137516</td><td>137516</td><td>442493.75</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>48</td><td>2/137516</td><td>137516</td><td>239040.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>51</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>53</td><td>144-13476-RU13477</td><td></td><td>265000.0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="export2valid" class="inner-content">
+                <div class="table-wrapper">
+                    <table id="tableExp2Valid">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>3</td><td>36674</td><td>DALI pietonal</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>5</td><td>58</td><td>Expertiza tehnica si DALI sediul administratiei C1-C6</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>6</td><td>30</td><td>Proiectare si executie campus</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>103</td><td>DALI Raza de soare</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>9</td><td>104</td><td>DALI Scoala 2</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>10</td><td>88</td><td>SF Autobaza</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>11</td><td>100719</td><td>proiectare Campus</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>30</td><td>30509</td><td>Proiectare autobaza</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>31</td><td>31/C</td><td>DALI HVAC</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>37</td><td>100939</td><td>PT CAV</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>39</td><td>7955</td><td>DALI Gradina publica si parcare</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>41</td><td>8869</td><td>SF cu elemente DALI constructii civile programe screening</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>42</td><td>6873</td><td>Spitalul Horezu</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>43</td><td>9940</td><td>SF, DTAC, DTOE centru ingrijiri paleative</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>44</td><td>227342</td><td>PT si Ex CAV FAZA 1</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>45</td><td>149/167011</td><td>proiectare si executie cladiri nZEB</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>46</td><td>146/165285</td><td>Acord subsecvent 4 la acord cadru 137516 - 13 septembrie</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>49</td><td>284/134075</td><td>SF CAV mare</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>50</td><td>47/37457</td><td>SF CAV</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>52</td><td>115632</td><td>SF CAV</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>54</td><td>310</td><td>PT CAROL DAVILA</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>55</td><td>34023</td><td>SF UMF</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>56</td><td>10366</td><td>DALI CENTRU PENTRU PERSONAL DIN SISTEMUL PUBLIC - CDCS</td></tr>
+                        </tbody></table></div></div></div>
+        <div id="export3" class="export-content ">
+            <div class="inner-tabs">
+                <button class="inner-tab active" onclick="showInner(3, 'prob', this)">Probleme (123)</button>
+                <button class="inner-tab" onclick="showInner(3, 'valid', this)">Valide (52)</button>
+            </div>
+            <div id="export3prob" class="inner-content active">
+                <div class="table-wrapper">
+                    <table id="tableExp3Prob">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Sugestie</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>2</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>3</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>5</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>6</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>7</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>9</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>10</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>11</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>12</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>14</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>15</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>16</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>17</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>18</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>19</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>20</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>21</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>23</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>27</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>29</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>31</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>32</td><td>01/24</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>33</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>35</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>37</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>39</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>41</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>42</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>43</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>45</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>46</td><td>144/213984/213985</td><td>144/213984/2/3985</td><td>103500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>47</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>48</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>49</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>50</td><td>145/6870/68702</td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>52</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>53</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>54</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>55</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>56</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>57</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>58</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>59</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>60</td><td></td><td></td><td>165000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>62</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>68</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>70</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>71</td><td>01/24</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>72</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>75</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>76</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>77</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>78</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>80</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>81</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>82</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>83</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>84</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>85</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>86</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>87</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>88</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>89</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>90</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>91</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>93</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>94</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>95</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>98</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>99</td><td>141/200203</td><td></td><td>176000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>100</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>101</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>102</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>103</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>104</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>106</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>109</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>110</td><td>492</td><td></td><td>189000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>111</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>112</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>115</td><td>276768</td><td></td><td>31000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>118</td><td>276795</td><td></td><td>69000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>119</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>120</td><td>0</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>121</td><td>241</td><td>7241</td><td>50000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>122</td><td>241</td><td>7241</td><td>50000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>123</td><td>139704</td><td></td><td>150000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>124</td><td>0</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>125</td><td>48/145223</td><td>48 145223</td><td>235000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>126</td><td>48/145228</td><td></td><td>240000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>129</td><td>04/136669</td><td></td><td>7500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>135</td><td>0</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>136</td><td>195/214286</td><td>195-214286</td><td>60000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>137</td><td>136718</td><td></td><td>30000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>140</td><td>0</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>141</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>142</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>143</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>145</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>146</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>147</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>148</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>149</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>150</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>151</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>153</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>155</td><td>5870</td><td></td><td>92000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>156</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>157</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>161</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>163</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>164</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>165</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>166</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>167</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>169</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>170</td><td>01/24</td><td></td><td>2500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>171</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>172</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>173</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>174</td><td></td><td></td><td>44200.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>175</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>176</td><td></td><td></td><td>nan</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="export3valid" class="inner-content">
+                <div class="table-wrapper">
+                    <table id="tableExp3Valid">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>4</td><td>100</td><td>Consultanta PR BI P3/3.2/1/2025 eficienta energetica cladiri publica</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>7025</td><td>MP modernizare transport public prin achizitie de autobuze oras Bucecea</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>13</td><td>225527</td><td>MP HUB</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>22</td><td>33289</td><td>CF autobaza</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>24</td><td>23600</td><td>MP achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>25</td><td>15796</td><td>MP ITS</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>26</td><td>37511</td><td>MP Digitalizare TP etapa II</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>28</td><td>22237</td><td>SO DELEGARE TP</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>30</td><td>CDSF0903</td><td>CF gradinita 242</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>34</td><td>31860</td><td>Consultanta monument istoric Fortul 13 Jilava</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>36</td><td>41721</td><td>CF Achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>38</td><td>54043</td><td>Consultanta achiziie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>40</td><td>23455</td><td>Consultanta program incluziune si demnitate sociala</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>44</td><td>144/81296/81297</td><td>finantare panouri fotovoltaice</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>51</td><td>144/107416/107417</td><td>Consultanta accesare fonduri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>61</td><td>91656</td><td>SO fundamentare centru comercial, parcari</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>63</td><td>121920</td><td>MP Colegiul Elena Doamna C16</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>64</td><td>101625</td><td>MP Colegiul Elena Doamnei</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>65</td><td>191162</td><td>Consultanta management proiect Modernizare Depou de tramvaie etapa 1</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>66</td><td>205926</td><td>Consultanta management proiect Modernizare Depou de tramvaie etapa 2</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>67</td><td>101621</td><td>MP Gradinita 1</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>69</td><td>170450</td><td>100 orase</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>73</td><td>5233</td><td>SIDU</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>74</td><td>2550</td><td>CF modernizare TP</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>79</td><td>23728</td><td>Consultanta infrastructura transport nemotorizat</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>92</td><td>31052</td><td>SO achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>96</td><td>19281</td><td>CF PARAU DAMBU</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>97</td><td>10115</td><td>Consultanta centru ingrijiri paleative</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>105</td><td>20616</td><td>Cerere finantare</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>107</td><td>143</td><td>Consultanta accesare fonduri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>108</td><td>189</td><td>consultanta fonduri Strategic projects under the critical raw materials ac</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>113</td><td>116193</td><td>Consultanta eficienta energetica cladiri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>114</td><td>99283</td><td>Consultanta regenerare urbana</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>116</td><td>38921</td><td>ASISTENTA TEHNICA CONSULTARE PUBLICA POR ZONE URBANE</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>117</td><td>38629</td><td>ASISTENTA TEHNICA CONSULTARE PUBLICA POR INFRASTRUCTURA AGREMENT</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>127</td><td>144802</td><td>CF  Gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>128</td><td>27/151030</td><td>Analiza DNSH Gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>130</td><td>250/207060</td><td>analiza DNSH</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>131</td><td>165/172800</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>132</td><td>167/172807</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>133</td><td>168/172809</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>134</td><td>166/172803</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>138</td><td>161/184449</td><td>MP gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>139</td><td>51/158930</td><td>Dotari scoli</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>144</td><td>105</td><td>ST si CF Calea Surii</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>152</td><td>643</td><td>Proiectare si consultanta accesare fonduri terminal intermodal port</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>154</td><td>11019</td><td>Cerere finantare</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>158</td><td>5975</td><td>Consultanta</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>159</td><td>8121</td><td>MP Proiectare sistem inteligent de planificare a calatoriilor cu transportul public </td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>160</td><td>28280</td><td>SF sistem tranport ecologic</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>162</td><td>12042</td><td>Consultanta, CF </td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>168</td><td>236</td><td>Cerere finnatare</td></tr>
+                        </tbody></table></div></div></div>
+        <div id="export4" class="export-content ">
+            <div class="inner-tabs">
+                <button class="inner-tab active" onclick="showInner(4, 'prob', this)">Probleme (152)</button>
+                <button class="inner-tab" onclick="showInner(4, 'valid', this)">Valide (23)</button>
+            </div>
+            <div id="export4prob" class="inner-content active">
+                <div class="table-wrapper">
+                    <table id="tableExp4Prob">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Sugestie</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>2</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>3</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>4</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>5</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>6</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>7</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>9</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>10</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>11</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>12</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>13</td><td></td><td></td><td>260000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>14</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>15</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>16</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>17</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>18</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>19</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>20</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>21</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>22</td><td></td><td></td><td>98000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>23</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>27</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>28</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>29</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>30</td><td></td><td></td><td>40000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>31</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>32</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>33</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>34</td><td></td><td></td><td>170000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>35</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>37</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>39</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>40</td><td></td><td></td><td>100000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>41</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>43</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>45</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>46</td><td>144/213984/213985</td><td>144/213984/2/3985</td><td>103500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>47</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>48</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>49</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>50</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>52</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>53</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>54</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>55</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>56</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>57</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>58</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>59</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>60</td><td></td><td></td><td>165000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>61</td><td></td><td></td><td>204130.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>62</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>63</td><td></td><td></td><td>80000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>64</td><td></td><td></td><td>60000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>65</td><td></td><td></td><td>151000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>66</td><td></td><td></td><td>123000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>67</td><td></td><td></td><td>60000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>68</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>69</td><td>170460</td><td></td><td>250000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>70</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>71</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>72</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>73</td><td></td><td></td><td>58600.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>75</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>77</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>78</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>79</td><td></td><td></td><td>110000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>80</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>81</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>82</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>83</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>84</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>85</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>86</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>87</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>88</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>89</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>90</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>91</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>93</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>94</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>95</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>96</td><td></td><td></td><td>124000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>97</td><td></td><td></td><td>120000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>98</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>99</td><td>141/200203</td><td></td><td>176000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>100</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>101</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>102</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>103</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>104</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>105</td><td></td><td></td><td>90000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>106</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>107</td><td></td><td></td><td>97000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>108</td><td></td><td></td><td>180000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>109</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>110</td><td></td><td></td><td>189000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>111</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>112</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>113</td><td></td><td></td><td>190000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>114</td><td></td><td></td><td>130000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>115</td><td></td><td></td><td>31000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>116</td><td></td><td></td><td>235000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>117</td><td></td><td></td><td>265000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>118</td><td></td><td></td><td>69000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>119</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>120</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>121</td><td>241/20021</td><td>241/200201</td><td>50000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>122</td><td>241/20021</td><td>241/200201</td><td>50000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>124</td><td>-</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>125</td><td></td><td></td><td>235000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>126</td><td></td><td></td><td>240000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>129</td><td>04/136669</td><td></td><td>7500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>135</td><td>-</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>136</td><td></td><td></td><td>60000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>137</td><td>136718</td><td></td><td>30000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>138</td><td></td><td></td><td>7447.55</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>139</td><td></td><td></td><td>749991.33</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status notfound'>COD INEXISTENT IN REGISTRU</span></td><td>140</td><td>-</td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>141</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>142</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>143</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>144</td><td></td><td></td><td>67000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>145</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>146</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>147</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>148</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>149</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>150</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>151</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>152</td><td></td><td></td><td>357252.74</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>153</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>154</td><td></td><td></td><td>49000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>155</td><td></td><td></td><td>92000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>156</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>157</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>161</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>162</td><td></td><td></td><td>135000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>163</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>164</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>165</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>166</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>167</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>168</td><td></td><td></td><td>270000.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>169</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>170</td><td></td><td></td><td>2500.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>171</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>172</td><td></td><td></td><td>0.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>173</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>174</td><td></td><td></td><td>44200.0</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>175</td><td></td><td></td><td>nan</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status empty'>COD CONTRACT NECOMPLETAT</span></td><td>176</td><td></td><td></td><td>nan</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="export4valid" class="inner-content">
+                <div class="table-wrapper">
+                    <table id="tableExp4Valid">
+                        <thead><tr><th>Sursa</th><th>Status</th><th>Linie</th><th>Cod</th><th>Proiect</th></tr></thead>
+                        <tbody>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>7025</td><td>MP modernizare transport public prin achizitie de autobuze oras Bucecea</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>24</td><td>23600</td><td>MP achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>25</td><td>15796</td><td>MP ITS</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>26</td><td>37511</td><td>MP Digitalizare TP etapa II</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>36</td><td>41721</td><td>CF Achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>38</td><td>54043</td><td>Consultanta achiziie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>42</td><td>43577</td><td>Asistenta tehnica achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>44</td><td>144/81296/81297</td><td>finantare panouri fotovoltaice</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>51</td><td>144/107416/107417</td><td>Consultanta accesare fonduri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>74</td><td>2550</td><td>CF modernizare TP</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>76</td><td>80145</td><td>Consultanta E-Ticketing</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>92</td><td>31052</td><td>SO achizitie autobuze</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>123</td><td>07/139704</td><td>CF Unitati invatamant</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>127</td><td>144802</td><td>CF  Gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>128</td><td>27/151030</td><td>Analiza DNSH Gradinita 269</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>130</td><td>250/207060</td><td>analiza DNSH</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>131</td><td>165/172800</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>132</td><td>167/172807</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>133</td><td>168/172809</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>134</td><td>166/172803</td><td>Consulatanta si cerere finantare blocuri</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>158</td><td>5975</td><td>Consultanta</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>159</td><td>8121</td><td>MP Proiectare sistem inteligent de planificare a calatoriilor cu transportul public </td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col M)</td><td><span class='status valid'>VALID</span></td><td>160</td><td>28280</td><td>SF sistem tranport ecologic</td></tr>
+                        </tbody></table></div></div></div>
+
+        <footer>Validare Contracte v4.0 | 5 analize procesate</footer>
+    </div>
+    <script>
+        Chart.register(ChartDataLabels);
+        const exportStats = {"-1": {"valid": 166, "duplicate": 2, "typo": 23, "empty": 272, "notfound": 49}, "0": {"valid": 68, "duplicate": 2, "typo": 8, "empty": 1, "notfound": 12}, "1": {"valid": 0, "duplicate": 0, "typo": 4, "empty": 3, "notfound": 9}, "2": {"valid": 23, "duplicate": 0, "typo": 3, "empty": 25, "notfound": 4}, "3": {"valid": 52, "duplicate": 0, "typo": 5, "empty": 101, "notfound": 17}, "4": {"valid": 23, "duplicate": 0, "typo": 3, "empty": 142, "notfound": 7}};
+        const ctx = document.getElementById('pieChart');
+        const pieChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Inexistente'],
+                datasets: [{ data: [166, 2, 23, 272, 49], backgroundColor: ['#27ae60', '#9b59b6', '#3498db', '#f39c12', '#e74c3c'], borderWidth: 0 }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#aaa' } } } }
+        });
+        
+        function updateDashboard(idx) {
+            const s = exportStats[idx];
+            const total = s.valid + s.duplicate + s.typo + s.empty + s.notfound;
+            document.getElementById('statValid').textContent = s.valid;
+            document.getElementById('statDuplicate').textContent = s.duplicate;
+            document.getElementById('statTypo').textContent = s.typo;
+            document.getElementById('statEmpty').textContent = s.empty;
+            document.getElementById('statNotfound').textContent = s.notfound;
+            pieChart.data.datasets[0].data = [s.valid, s.duplicate, s.typo, s.empty, s.notfound];
+            pieChart.update();
+        }
+        
+        function showExport(idx, btn) {
+            document.querySelectorAll('.export-content').forEach(ec => ec.classList.remove('active'));
+            document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('export' + idx).classList.add('active');
+            btn.classList.add('active');
+            updateDashboard(idx);
+        }
+        
+        function showInner(expIdx, type, btn) {
+            const container = document.getElementById('export' + expIdx);
+            container.querySelectorAll('.inner-content').forEach(ic => ic.classList.remove('active'));
+            container.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('export' + expIdx + type).classList.add('active');
+            btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>
