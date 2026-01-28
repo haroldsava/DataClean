@@ -36,6 +36,21 @@ def clean_project_name(value):
         return ""
     return text
 
+def clean_numeric_code(value):
+    """Cleans numeric codes, removing .0 from whole numbers"""
+    if pd.isna(value):
+        return ""
+    # If it's a float that's actually a whole number, convert to int
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    text = str(value).strip()
+    if text.lower() in ['nan', 'none']:
+        return ""
+    # Handle string that ends with .0
+    if text.endswith('.0'):
+        return text[:-2]
+    return text
+
 def find_project_name_col(df):
     """Attempts to find the column containing the Project Name in the user sheet"""
     # First, check for 'Name' column explicitly (Wrike uses this)
@@ -168,12 +183,12 @@ def generate_html(data, stats, all_exports):
             <div id="export{idx}prob" class="inner-content active">
                 <div class="table-wrapper">
                     <table id="table{prefix}Prob">
-                        <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">Cod</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th></tr></thead>
+                        <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th><th onclick="sortTable(this, 6)">COD PROIECT</th></tr></thead>
                         <tbody>
 """
         for r in probs:
             status_class = r['status'].lower().replace(' ', '')
-            tab_html += f"<tr><td>{r['source']}</td><td><span class='status {status_class}'>{r['status_text']}</span></td><td>{r['line']}</td><td>{r['code']}</td><td>{r['suggest']}</td><td>{r['project']}</td></tr>\n"
+            tab_html += f"<tr><td>{r['source']}</td><td><span class='status {status_class}'>{r['status_text']}</span></td><td>{r['line']}</td><td>{r['code']}</td><td>{r['suggest']}</td><td>{r['project']}</td><td>{r['cod_proiect']}</td></tr>\n"
         
         tab_html += f"""                        </tbody>
                     </table>
@@ -182,11 +197,11 @@ def generate_html(data, stats, all_exports):
             <div id="export{idx}valid" class="inner-content">
                 <div class="table-wrapper">
                     <table id="table{prefix}Valid">
-                        <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">Cod</th><th onclick="sortTable(this, 4)">Proiect</th></tr></thead>
+                        <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Proiect</th><th onclick="sortTable(this, 5)">COD PROIECT</th></tr></thead>
                         <tbody>
 """
         for r in valids:
-            tab_html += f"<tr><td>{r['source']}</td><td><span class='status valid'>VALID</span></td><td>{r['line']}</td><td>{r['code']}</td><td>{r['project']}</td></tr>\n"
+            tab_html += f"<tr><td>{r['source']}</td><td><span class='status valid'>VALID</span></td><td>{r['line']}</td><td>{r['code']}</td><td>{r['project']}</td><td>{r['cod_proiect']}</td></tr>\n"
             
         tab_html += "                        </tbody></table></div></div></div>\n"
         return tab_html
@@ -303,6 +318,18 @@ def main():
             
     valid_codes_list = list(valid_codes.keys())
 
+    # Build COD PROIECT mapping from the same registry sheet
+    cod_proiect_map = {}
+    if 'COD PROIECT' in reg_df.columns:
+        for index, row in reg_df.iterrows():
+            code = clean_text(row[reg_col])
+            cod_proiect = clean_numeric_code(row['COD PROIECT'])
+            if code and cod_proiect:
+                cod_proiect_map[code] = cod_proiect
+        print(f"Loaded {len(cod_proiect_map)} COD PROIECT entries")
+    else:
+        print("Warning: COD PROIECT column not found in registry")
+
     print("Loading Wrike Input File...")
     wrike_sheets = pd.read_excel(INPUT_FILE, sheet_name=None)
     
@@ -343,7 +370,8 @@ def main():
                     status = ""
                     status_text = ""
                     suggest = ""
-                    
+                    cod_proiect_val = "-"
+
                     # 1. Check for Empty
                     if clean_val == "":
                         # Is this project listed as missing contract in registry?
@@ -354,7 +382,8 @@ def main():
                             status = "empty"
                             status_text = "NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE"
                         stats['empty'] += 1
-                        
+                        cod_proiect_val = "-"
+
                     # 2. Check for Exact Match
                     elif clean_val in valid_codes:
                         if value_counts[clean_val] > 1:
@@ -367,7 +396,8 @@ def main():
                             status_text = "VALID"
                             stats['valid'] += 1
                             proj_val = valid_codes[clean_val] # Use Registry name for valid
-                        
+                        cod_proiect_val = cod_proiect_map.get(clean_val, "-")
+
                     # 3. Check for Typos / Not Found
                     else:
                         match = process.extractOne(clean_val, valid_codes_list, scorer=fuzz.ratio)
@@ -376,10 +406,12 @@ def main():
                             status_text = "POSIBILA EROARE DE TASTARE"
                             suggest = match[0]
                             stats['typo'] += 1
+                            cod_proiect_val = cod_proiect_map.get(match[0], "-")
                         else:
                             status = "notfound"
                             status_text = "NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE"
                             stats['notfound'] += 1
+                            cod_proiect_val = "-"
 
                     report_data[display_name].append({
                         "source": display_name,
@@ -388,7 +420,8 @@ def main():
                         "status": status,
                         "status_text": status_text,
                         "suggest": suggest,
-                        "project": proj_val
+                        "project": proj_val,
+                        "cod_proiect": cod_proiect_val
                     })
             else:
                 print(f"Warning: Column '{col_name}' not found in sheet '{sheet_name}'.")
