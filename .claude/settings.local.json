@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" status)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" diff generate_report.py)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" log --oneline -5)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" checkout -b fix/project-name-display)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" add generate_report.py)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" commit -m \"$\\(cat <<''EOF''\nFix project name display in HTML report\n\n- Add clean_project_name\\(\\) function to handle NaN values properly\n- Update find_project_name_col\\(\\) to prioritize ''Name'' column \\(Wrike''s project name\\)\n- Exclude ''valoare'' and ''cod'' columns from project name detection to avoid selecting budget/code columns\n- Apply clean_project_name to both registry and Wrike sheet project name reading\n\nThis fixes the issue where the Proiect column showed numeric values \\(like 84000.0\\) or ''nan'' instead of actual project names.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" push -u origin fix/project-name-display)",
+      "Bash(git -C \"c:\\\\Projects\\\\DataClean\" gh pr create --title \"Fix project name display in HTML report\" --body \"$\\(cat <<''EOF''\n## Summary\n- Fix the Proiect column showing numeric values \\(like `84000.0`\\) or `nan` instead of actual project names\n- Add `clean_project_name\\(\\)` function to properly handle NaN values\n- Update `find_project_name_col\\(\\)` to prioritize the `Name` column and exclude budget/code columns\n\n## Changes\n- Added `clean_project_name\\(\\)` helper function that handles NaN values\n- Updated `find_project_name_col\\(\\)` to:\n  - Check for `Name` column first \\(Wrike''s project name column\\)\n  - Exclude columns containing ''valoare'' or ''cod'' \\(budget/code columns\\)\n- Applied `clean_project_name` to both registry and Wrike sheet project name reading\n\n## Test plan\n- [ ] Run `python generate_report.py`\n- [ ] Open `raport_master.html` in browser\n- [ ] Verify Proiect column shows actual project names, not numbers\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\nEOF\n\\)\")",
+      "Bash(gh pr create:*)"
+    ]
+  }
+}
