@@ -16,7 +16,8 @@
       "Bash(git -C \"c:\\\\Projects\\\\DataClean\" add generate_report.py raport_master.html)",
       "Bash(git -C \"c:\\\\Projects\\\\DataClean\" commit -m \"$\\(cat <<''EOF''\nAdd COD PROIECT column and improve report formatting\n\n- Add new COD PROIECT column showing project code from registry\n- Rename ''Cod'' column header to ''NR CONTRACT'' for clarity\n- Add clean_numeric_code function to remove unnecessary .0 decimals\n- Update status labels for better clarity:\n  - NR CONTRACT ABSENT IN REGISTRU SI IN WRIKE\n  - NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE  \n  - NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE\n- Show Wrike project name for duplicates instead of registry name\n- Make table headers sticky when scrolling\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git -C \"c:\\\\Projects\\\\DataClean\" log -1 --stat)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(dir:*)"
     ]
   }
 }

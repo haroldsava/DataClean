@@ -9,6 +9,7 @@ from collections import Counter
 REGISTRY_FILE = 'registry_cleaned.xlsx'
 INPUT_FILE = 'Compilate Wrike.xlsx'
 OUTPUT_HTML = 'raport_master.html'
+OUTPUT_EXCEL = 'extrase_pt_conta.xlsx'
 
 # Sheet mappings: { 'Sheet Name': [List of Column Names to check] }
 TARGET_SHEETS = {
@@ -65,12 +66,29 @@ def find_project_name_col(df):
             return col
     return df.columns[1] if len(df.columns) > 1 else df.columns[0]
 
-def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_stats=None):
+def sheet_name_to_filename(sheet_name):
+    """Convert sheet name to a valid filename."""
+    # Remove common suffixes and clean up
+    name = sheet_name.replace(" (export)", "").replace("(export)", "")
+    # Replace spaces and special chars with underscores
+    name = re.sub(r'[^\w\s-]', '', name)  # Remove special chars except dash
+    name = re.sub(r'\s+', '_', name.strip())  # Replace spaces with underscore
+    name = name.lower()
+    return f"raport_{name}.html"
+
+def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_stats=None,
+                  output_file=None, title=None):
     """Generates the HTML file matching your exact requested design."""
     if missing_from_wrike is None:
         missing_from_wrike = []
     if registry_stats is None:
         registry_stats = {'total': 0, 'with_contract': 0, 'no_contract': 0, 'found_in_wrike': 0, 'not_in_wrike': 0}
+    if output_file is None:
+        output_file = OUTPUT_HTML
+    if title is None:
+        title = "Raport Master - Multiple Exporturi"
+
+    is_single_team = len(all_exports) == 1
 
     total_valid = sum(s['valid'] for s in stats.values())
     total_dup = sum(s['duplicate'] for s in stats.values())
@@ -97,7 +115,7 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raport Master - Multiple Exporturi</title>
+    <title>{title}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
@@ -156,8 +174,8 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
 <body>
     <div class="container">
         <header>
-            <h1>Raport Master - Multiple Exporturi</h1>
-            <div class="subtitle">{len(all_exports)} seturi date | Total: {total_all} intrari | Generat: {timestamp}</div>
+            <h1>{title}</h1>
+            <div class="subtitle">{'' if is_single_team else f'{len(all_exports)} seturi date | '}Total: {total_all} intrari | Generat: {timestamp}</div>
         </header>
         
         <div class="dashboard">
@@ -170,7 +188,10 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
             </div>
             <div class="chart-container"><canvas id="pieChart" width="250" height="250"></canvas></div>
         </div>
-
+"""
+    # Only show registry summary in master report (not for individual team reports)
+    if not is_single_team:
+        html += f"""
         <div class="registry-summary">
             <h3>Sumar Registru Contracte</h3>
             <div class="registry-grid">
@@ -192,13 +213,15 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
                 </div>
             </div>
         </div>
-
-        <div class="export-tabs">
+"""
+    # Only show export tabs if there are multiple sheets (master view)
+    if not is_single_team:
+        html += """        <div class="export-tabs">
             <button class="export-tab active" onclick="showExport(-1, this)">📊 MASTER (Toate)</button>
 """
-    for idx, exp_name in enumerate(all_exports):
-        html += f'            <button class="export-tab" onclick="showExport({idx}, this)">{exp_name}</button>\n'
-    html += '        </div>\n\n'
+        for idx, exp_name in enumerate(all_exports):
+            html += f'            <button class="export-tab" onclick="showExport({idx}, this)">{exp_name}</button>\n'
+        html += '        </div>\n\n'
 
     # Content loop
     full_dataset = []
@@ -243,12 +266,17 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
         tab_html += "        </div>\n"
         return tab_html
 
-    # Render Master
-    html += render_sheet_content(-1, full_dataset, is_master=True)
-
-    # Render Individual Sheets
-    for idx, exp_name in enumerate(all_exports):
-        html += render_sheet_content(idx, data[exp_name])
+    # For single-team mode, just render that team's data directly
+    # For master mode, render both the combined view and individual sheets
+    if is_single_team:
+        # Single team - render just the team data (use idx=-1 to make it active)
+        html += render_sheet_content(-1, full_dataset, is_master=True)
+    else:
+        # Render Master (combined view)
+        html += render_sheet_content(-1, full_dataset, is_master=True)
+        # Render Individual Sheets
+        for idx, exp_name in enumerate(all_exports):
+            html += render_sheet_content(idx, data[exp_name])
 
     # Footer and JS
     html += f"""
@@ -329,9 +357,30 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
 </body>
 </html>
 """
-    with open(OUTPUT_HTML, 'w', encoding='utf-8') as f:
+    with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html)
-    print(f"Report generated successfully: {OUTPUT_HTML}")
+    print(f"Report generated successfully: {output_file}")
+
+
+def export_valid_to_excel(codes_found, registry_full, output_file):
+    """Exports valid entries to Excel for accounting."""
+    export_data = []
+    for code in sorted(codes_found):
+        if code in registry_full:
+            row = registry_full[code]
+            export_data.append({
+                'Cod proiect': row['cod_proiect'],
+                'Numar Contract': row['numar_contract'],
+                'Nume Proiect': row['nume_proiect'],
+                'Data Contract': row['data_contract']
+            })
+
+    if export_data:
+        export_df = pd.DataFrame(export_data)
+        export_df.to_excel(output_file, index=False)
+        print(f"Exported {len(export_data)} valid entries to {output_file}")
+    else:
+        print("No valid entries to export")
 
 
 def main():
@@ -375,6 +424,18 @@ def main():
         print(f"Loaded {len(cod_proiect_map)} COD PROIECT entries")
     else:
         print("Warning: COD PROIECT column not found in registry")
+
+    # Build full registry lookup for export (includes DATA CONTRACT)
+    registry_full = {}
+    for _, row in reg_df.iterrows():
+        code = clean_text(row[reg_col])
+        if code:
+            registry_full[code] = {
+                'cod_proiect': clean_numeric_code(row['COD PROIECT']) if 'COD PROIECT' in reg_df.columns else "",
+                'numar_contract': row['NUMAR CONTRACT'],
+                'nume_proiect': row['NUME PROIECT'],
+                'data_contract': row['DATA CONTRACT']
+            }
 
     print("Loading Wrike Input File...")
     wrike_sheets = pd.read_excel(INPUT_FILE, sheet_name=None)
@@ -500,7 +561,23 @@ def main():
         'not_in_wrike': len(valid_codes) - len(codes_found_in_wrike)
     }
 
-    generate_html(report_data, report_stats, all_exports, missing_from_wrike, registry_stats)
+    # Generate Master Report (all sheets combined)
+    generate_html(report_data, report_stats, all_exports, missing_from_wrike, registry_stats,
+                  output_file=OUTPUT_HTML, title="Raport Master - Multiple Exporturi")
+
+    # Generate Individual Team Reports (filename derived from sheet name)
+    for sheet_name in all_exports:
+        if sheet_name in report_data:
+            team_data = {sheet_name: report_data[sheet_name]}
+            team_stats = {sheet_name: report_stats[sheet_name]}
+            team_name = sheet_name.replace(" (export)", "").strip()
+            team_output_file = sheet_name_to_filename(sheet_name)
+            generate_html(team_data, team_stats, [sheet_name],
+                          output_file=team_output_file,
+                          title=f"Raport Echipa - {team_name}")
+
+    # Export valid entries to Excel for accounting
+    export_valid_to_excel(codes_found_in_wrike, registry_full, OUTPUT_EXCEL)
 
 if __name__ == "__main__":
     main()
