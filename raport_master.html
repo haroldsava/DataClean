@@ -56,6 +56,18 @@
         .registry-item.found { border-left: 3px solid #27ae60; }
         .registry-item.notfound { border-left: 3px solid #e74c3c; }
         .registry-item.nocontract { border-left: 3px solid #f39c12; }
+        .registry-item.duplicate { border-left: 3px solid #e74c3c; background: rgba(231, 76, 60, 0.1); }
+        .registry-item.ok { border-left: 3px solid #27ae60; }
+        .registry-item.total-unique { border-left: 3px solid #3498db; background: rgba(52, 152, 219, 0.1); }
+        .duplicate-warning { margin-top: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; border-radius: 8px; overflow: hidden; }
+        .duplicate-header { padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: #e74c3c; font-weight: 500; }
+        .duplicate-header:hover { background: rgba(231, 76, 60, 0.15); }
+        .toggle-icon { transition: transform 0.3s; }
+        .duplicate-details { padding: 15px; background: rgba(0,0,0,0.2); }
+        .duplicate-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .duplicate-table th { text-align: left; padding: 8px; border-bottom: 1px solid #444; color: #888; }
+        .duplicate-table td { padding: 8px; border-bottom: 1px solid #333; color: #ccc; }
+        .duplicate-table tr:last-child td { border-bottom: none; }
         footer { text-align: center; padding: 20px; color: #666; font-size: 0.85em; }
     </style>
 </head>
@@ -63,16 +75,16 @@
     <div class="container">
         <header>
             <h1>Raport Master - Multiple Exporturi</h1>
-            <div class="subtitle">4 seturi date | Total: 337 intrari | Generat: 29.01.2026 11:01</div>
+            <div class="subtitle">4 seturi date | Total: 337 intrari | Generat: 29.01.2026 14:47</div>
         </header>
         
         <div class="dashboard">
             <div class="cards">
-                <div class="card valid"><h2 id="statValid">146</h2><div class="pct" id="pctValid">43.3%</div><p>Coduri Valide</p></div>
+                <div class="card valid"><h2 id="statValid">157</h2><div class="pct" id="pctValid">46.6%</div><p>Coduri Valide</p></div>
                 <div class="card duplicate"><h2 id="statDuplicate">2</h2><div class="pct" id="pctDuplicate">0.6%</div><p>Duplicate</p></div>
-                <div class="card typo"><h2 id="statTypo">20</h2><div class="pct" id="pctTypo">5.9%</div><p>Posibile Erori</p></div>
+                <div class="card typo"><h2 id="statTypo">16</h2><div class="pct" id="pctTypo">4.7%</div><p>Posibile Erori</p></div>
                 <div class="card empty"><h2 id="statEmpty">128</h2><div class="pct" id="pctEmpty">38.0%</div><p>Necompletate</p></div>
-                <div class="card notfound"><h2 id="statNotfound">41</h2><div class="pct" id="pctNotfound">12.2%</div><p>Inexistente</p></div>
+                <div class="card notfound"><h2 id="statNotfound">34</h2><div class="pct" id="pctNotfound">10.1%</div><p>Necorelate</p></div>
             </div>
             <div class="chart-container"><canvas id="pieChart" width="250" height="250"></canvas></div>
         </div>
@@ -81,20 +93,37 @@
             <h3>Sumar Registru Contracte</h3>
             <div class="registry-grid">
                 <div class="registry-item total">
-                    <div class="number">508</div>
-                    <div class="label">Total Proiecte in Registru</div>
+                    <div class="number">514</div>
+                    <div class="label">Total Randuri</div>
                 </div>
                 <div class="registry-item found">
-                    <div class="number">158</div>
-                    <div class="label">Gasite in Wrike</div>
-                </div>
-                <div class="registry-item notfound">
-                    <div class="number">206</div>
-                    <div class="label">Negasite in Wrike</div>
+                    <div class="number">370</div>
+                    <div class="label">Cu Nr. Contract</div>
                 </div>
                 <div class="registry-item nocontract">
                     <div class="number">144</div>
                     <div class="label">Fara Nr. Contract</div>
+                </div>
+                <div class="registry-item duplicate">
+                    <div class="number">6⚠️</div>
+                    <div class="label">Contracte Duplicate</div>
+                </div>
+                <div class="registry-item total-unique">
+                    <div class="number">508</div>
+                    <div class="label">Total Proiecte Unice</div>
+                </div>
+            </div>
+            
+            <div class="duplicate-warning">
+                <div class="duplicate-header" onclick="toggleDuplicates()">
+                    <span>⚠️ Contracte Duplicate - acelasi numar folosit pentru proiecte diferite</span>
+                    <span class="toggle-icon" id="dup-toggle">▼</span>
+                </div>
+                <div class="duplicate-details" id="duplicate-list" style="display: none;">
+                    <table class="duplicate-table">
+                        <thead><tr><th>Nr. Contract</th><th>Randuri Excel & Proiecte</th></tr></thead>
+                        <tbody><tr><td><strong>111</strong></td><td>Row 164 (Studiu autorizatii taxi hibrid...) & Row 505 (SF Drum Nisipoasa)</td></tr><tr><td><strong>207</strong></td><td>Row 182 (SIDU) & Row 296 (SF amenajare Pasaj Lujerului)</td></tr><tr><td><strong>201</strong></td><td>Row 200 (SF PIATETA FAVORIT) & Row 223 (STUDIU PARCARI)</td></tr><tr><td><strong>24633</strong></td><td>Row 291 (SF coridor N-S) & Row 311 (SF ITS Runda 1)</td></tr><tr><td><strong>2545</strong></td><td>Row 331 (SF  -  POR) & Row 333 (SF modernizare TP)</td></tr><tr><td><strong>110</strong></td><td>Row 365 (SF extindere TM) & Row 504 (Manual identitate vizuala)</td></tr></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -108,8 +137,8 @@
 
         <div id="export-1" class="export-content active">
             <div class="inner-tabs">
-                <button class="inner-tab active" onclick="showInner(-1, 'prob', this)">Probleme (191)</button>
-                <button class="inner-tab" onclick="showInner(-1, 'valid', this)">Valide (146)</button>
+                <button class="inner-tab active" onclick="showInner(-1, 'prob', this)">Probleme (180)</button>
+                <button class="inner-tab" onclick="showInner(-1, 'valid', this)">Valide (157)</button>
             </div>
             <div id="export-1prob" class="inner-content active">
                 <div class="table-wrapper">
@@ -117,196 +146,185 @@
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th><th onclick="sortTable(this, 6)">COD PROIECT</th></tr></thead>
                         <tbody>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>13</td><td>CDSF4301</td><td>CDSF04301</td><td>BUCURESTI - DTAC PT Relocare troleibuz Unirii</td><td>348</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>15</td><td>CDSF0108</td><td></td><td>BUCURESTI - SPF Aeroport</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>15</td><td>CDSF0108</td><td></td><td>BUCURESTI - SPF Aeroport</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>17</td><td>CDSF0508</td><td>CDSF0508_</td><td>BUCURESTI - STUDIU DE TRAFIC - UNIRII E2</td><td>349</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>34</td><td>106.066</td><td>106066</td><td>CALARASI - DNSH REABILITARE BRAT BORCEA</td><td>432</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>147058</td><td>147.058</td><td>CALARASI STUDII DNSH</td><td>369</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>43</td><td>2023/s 139-445422</td><td>2023/S 139-445422</td><td>CHIȘINĂU - STUDIU DE E-TICKETING</td><td>324</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>45</td><td>264</td><td></td><td>CONSTANTA - CS Autobuze PNRR</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>53</td><td>16</td><td></td><td>DROBETA - SF PT ITS STATII (subco)</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>54</td><td>12598</td><td></td><td>FOCSANI - SF PARCARE LEOPOLDINA</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>59</td><td>4866</td><td></td><td>HOREZU - STUDIU DE TRAFIC</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>61</td><td></td><td></td><td>MODESHIFT - CONCEPT TEHNIC</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>62</td><td>1-7633</td><td></td><td>ODOBESTI - PT INTEGRAT</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>63</td><td>35889</td><td></td><td>PIATRA NEAMT - DALI PT POAT MOBILITATE</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>45</td><td>264</td><td></td><td>CONSTANTA - CS Autobuze PNRR</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>53</td><td>16</td><td></td><td>DROBETA - SF PT ITS STATII (subco)</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>54</td><td>12598</td><td></td><td>FOCSANI - SF PARCARE LEOPOLDINA</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>59</td><td>4866</td><td></td><td>HOREZU - STUDIU DE TRAFIC</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>61</td><td></td><td></td><td>MODESHIFT - CONCEPT TEHNIC</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>62</td><td>1-7633</td><td></td><td>ODOBESTI - PT INTEGRAT</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>63</td><td>35889</td><td></td><td>PIATRA NEAMT - DALI PT POAT MOBILITATE</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>64</td><td>1151/17.09.2025</td><td>12151</td><td>PIATRA NEAMT - DTAC+PT Modificare POAT</td><td>479</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>67</td><td>49</td><td></td><td>RM VALCEA - SO SI STRATEGIE DELEGARE TRANSPORT</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>73</td><td>493</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Baneasa</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>67</td><td>49</td><td></td><td>RM VALCEA - SO SI STRATEGIE DELEGARE TRANSPORT</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>73</td><td>493</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Baneasa</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>74</td><td>495</td><td>4795</td><td>SECTOR 1 - DTAC PT Suprainaltate Bucurestii Noi</td><td>275</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>75</td><td>494</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Grivita</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>76</td><td>491</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Piata Romana</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>75</td><td>494</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Grivita</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>76</td><td>491</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Piata Romana</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>79</td><td>2/137516</td><td>137516</td><td>Sector 5 - Treceri de pietoni suprainaltate</td><td>411</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>82</td><td>8810</td><td></td><td>SUCEAVA - CS Autobuze PNRR</td><td>232</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>85</td><td>8810</td><td></td><td>SUCEAVA - SF PT TP ETAPA 1</td><td>232</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>92</td><td>7610</td><td></td><td>VASLUI - SO MICROBUZE SCOLARE</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>2</td><td></td><td></td><td>BUCUREȘTI - REAMENAJAREA PARCULUI NAȚIONAL - INSTALAȚII ELECTRICE</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>3</td><td>176240.0</td><td>176240</td><td>BUZĂU - PLAN INTEGRAT DE REGENERARE URBANA_1</td><td>370</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>4</td><td>160323.0</td><td>160323</td><td>CĂLĂRAȘI - POAT - REGENERARE URBANĂ CARTIERE - ACTUALIZARE</td><td>377</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>5</td><td>16244.0</td><td></td><td>PLOIESTI - REGENERARE PARAUL DAMBU</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>6</td><td>16850.0</td><td></td><td>ROȘIORII DE VEDE - REGENERARE URBANĂ PARC GRĂDINĂ PUBLICĂ</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>7</td><td>218424.0</td><td></td><td>BUCUREȘTI SECTOR 3 - PASAJ LAMINORULUI</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>8</td><td>96.0</td><td></td><td>AMENAJAREA SCUARULUI DE LA INTERSECȚIA STRĂZILOR CALEA DOROBANȚI CU STRADA RADU BELLER</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>9</td><td>98726.0</td><td></td><td>FOCȘANI - DALI REGENERARE URBANĂ A ZONEI CENTRALE A MUNICIPIULUI FOCȘANI</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>10</td><td>369.0</td><td></td><td>BUCUREȘTI SECTOR 1 - Masterplan de regenerare urbană</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>11</td><td>148799.0</td><td>148799</td><td>BUCUREȘTI SECTOR 3 - PARC PANTELIMON</td><td>422</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>12</td><td>152515.0</td><td>152515</td><td>CONSTANȚA - DALI PT - Inel 2</td><td>199</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>13</td><td>43683.0</td><td></td><td>CONSTANȚA - Greener Cities</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>14</td><td>91670.0</td><td></td><td>FOCȘANI - DALI REABILITARE SI REGENERARE ZONA PARC TEATRU</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>15</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare a Falezei Dunării</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>16</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare Valea Țiglinei</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>17</td><td>1478.0</td><td></td><td>PUZ - CAV ADI Bucuresti</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>2</td><td>1320/01</td><td></td><td>AFER - SF HALA FAUREI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>4</td><td>8599</td><td></td><td>ALEXANDRIA PT Pietonal</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>7</td><td>Q213.00_0707.D</td><td></td><td>BACAU - DTAC+PT Sistematizare si Peisagere Campus</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Alte studii conform CU: nZEB</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>13</td><td></td><td></td><td>Audit energetic - se preda la asistenta tehnica</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>14</td><td></td><td></td><td>Capitolul privind economia circulara</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>15</td><td></td><td></td><td>Documentatie emitere CU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>16</td><td></td><td></td><td>Documentatii avize PSI si protectie civila</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>17</td><td></td><td></td><td>Documentatii avize si acorduri</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>18</td><td></td><td></td><td>DTAC + DTOE (Verificate)</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>19</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>20</td><td></td><td></td><td>PT (Verificat)</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>21</td><td></td><td></td><td>Standarde si proceduri mentenanta</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>22</td><td></td><td></td><td>Studii pentru obtinerea acordurilor/avizelor de mediu</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>23</td><td></td><td></td><td>Studiu de fezabilitate</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>24</td><td></td><td></td><td>Studiu de impact Arhitectural si Urbanistic</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>25</td><td></td><td></td><td>Studiu de TRAFIC si calculul emisiilor GES</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>26</td><td></td><td></td><td>Studiu DNSH si imunizare</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>27</td><td></td><td></td><td>Studiu GEO</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>28</td><td></td><td></td><td>Studiu privind utilizarea unor sisteme alternative</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>29</td><td></td><td></td><td>Studiu TOPO</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>32</td><td></td><td></td><td>1. IMPARTIRE ACTIVITATI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>33</td><td></td><td></td><td>2. OBTINERE CERTIFICAT DE URBANISM</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>34</td><td></td><td></td><td>3. EXPERTIZA TEHNICA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>35</td><td></td><td></td><td>4. DALI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>36</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>92</td><td>7610</td><td></td><td>VASLUI - SO MICROBUZE SCOLARE</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>2</td><td></td><td></td><td>BUCUREȘTI - REAMENAJAREA PARCULUI NAȚIONAL - INSTALAȚII ELECTRICE</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>7</td><td>218424.0</td><td></td><td>BUCUREȘTI SECTOR 3 - PASAJ LAMINORULUI</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>10</td><td>369.0</td><td></td><td>BUCUREȘTI SECTOR 1 - Masterplan de regenerare urbană</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>15</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare a Falezei Dunării</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>16</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare Valea Țiglinei</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>2</td><td>1320/01</td><td></td><td>AFER - SF HALA FAUREI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>4</td><td>8599</td><td></td><td>ALEXANDRIA PT Pietonal</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>7</td><td>Q213.00_0707.D</td><td></td><td>BACAU - DTAC+PT Sistematizare si Peisagere Campus</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Alte studii conform CU: nZEB</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>13</td><td></td><td></td><td>Audit energetic - se preda la asistenta tehnica</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>14</td><td></td><td></td><td>Capitolul privind economia circulara</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>15</td><td></td><td></td><td>Documentatie emitere CU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>16</td><td></td><td></td><td>Documentatii avize PSI si protectie civila</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>17</td><td></td><td></td><td>Documentatii avize si acorduri</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>18</td><td></td><td></td><td>DTAC + DTOE (Verificate)</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>19</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>20</td><td></td><td></td><td>PT (Verificat)</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>21</td><td></td><td></td><td>Standarde si proceduri mentenanta</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>22</td><td></td><td></td><td>Studii pentru obtinerea acordurilor/avizelor de mediu</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>23</td><td></td><td></td><td>Studiu de fezabilitate</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>24</td><td></td><td></td><td>Studiu de impact Arhitectural si Urbanistic</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>25</td><td></td><td></td><td>Studiu de TRAFIC si calculul emisiilor GES</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>26</td><td></td><td></td><td>Studiu DNSH si imunizare</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>27</td><td></td><td></td><td>Studiu GEO</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>28</td><td></td><td></td><td>Studiu privind utilizarea unor sisteme alternative</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>29</td><td></td><td></td><td>Studiu TOPO</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>32</td><td></td><td></td><td>1. IMPARTIRE ACTIVITATI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>33</td><td></td><td></td><td>2. OBTINERE CERTIFICAT DE URBANISM</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>34</td><td></td><td></td><td>3. EXPERTIZA TEHNICA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>35</td><td></td><td></td><td>4. DALI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>36</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>80/149560/</td><td>80/149560</td><td>EXPERTIZE TEHNICE SCOALA 126&103</td><td>420</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>40</td><td></td><td></td><td>HOREZU - DTAC SPITAL</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>40</td><td></td><td></td><td>HOREZU - DTAC SPITAL</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>47</td><td>2/137516</td><td>137516</td><td>Sector 5 - PT Scoala 103</td><td>411</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>48</td><td>2/137516</td><td>137516</td><td>Sector 5 - PT Scoala 126</td><td>411</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>51</td><td></td><td></td><td>SF CAV BUZAU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>53</td><td>144-13476-RU13477</td><td></td><td>SF DALI Centru str. Muntii carpati S5 PIDS</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>2</td><td></td><td></td><td>2.1 US</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>3</td><td></td><td></td><td>ASPMB</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>5</td><td></td><td></td><td>BOTOSANI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>6</td><td></td><td></td><td>EDUCATIE PNRR C5 scoli verzi</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>7</td><td></td><td></td><td>EDUCATIE PNRR C15 dotari</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>9</td><td></td><td></td><td>SIDU BOTOȘANI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>10</td><td></td><td></td><td>BRASOV</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>11</td><td></td><td></td><td>BUZAU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Buzau M100</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>14</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>15</td><td></td><td></td><td>M100 - Climate City Contract</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>16</td><td></td><td></td><td>SCOLI VERZI PNRR</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>17</td><td></td><td></td><td>SDL DLRC BUZAU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>18</td><td></td><td></td><td>SIDU BUZĂU 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>19</td><td></td><td></td><td>CALARASI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>20</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>21</td><td></td><td></td><td>CAMPINA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>23</td><td></td><td></td><td>FONDUL LOCAL C10 PNRR</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>27</td><td></td><td></td><td>SDL CAMPINA 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>29</td><td></td><td></td><td>CDS</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>31</td><td></td><td></td><td>CHISINAU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>32</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>33</td><td></td><td></td><td>CJ ILFOV</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>35</td><td></td><td></td><td>CONSTANTA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>37</td><td></td><td></td><td>MNG. DESEURILOR PNRR C3 (2xCAV mic + CAV mare)</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>39</td><td></td><td></td><td>DAS MAGURELE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>41</td><td></td><td></td><td>DEVA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>43</td><td></td><td></td><td>DGASPC S5</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>45</td><td></td><td></td><td>MP SERVICII COMUNITARE DGASPC S5 PIDS</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>51</td><td></td><td></td><td>SF CAV BUZAU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>53</td><td>144-13476-RU13477</td><td></td><td>SF DALI Centru str. Muntii carpati S5 PIDS</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>2</td><td></td><td></td><td>2.1 US</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>3</td><td></td><td></td><td>ASPMB</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>5</td><td></td><td></td><td>BOTOSANI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>6</td><td></td><td></td><td>EDUCATIE PNRR C5 scoli verzi</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>7</td><td></td><td></td><td>EDUCATIE PNRR C15 dotari</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>9</td><td></td><td></td><td>SIDU BOTOȘANI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>10</td><td></td><td></td><td>BRASOV</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>11</td><td></td><td></td><td>BUZAU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Buzau M100</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>14</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>15</td><td></td><td></td><td>M100 - Climate City Contract</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>16</td><td></td><td></td><td>SCOLI VERZI PNRR</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>17</td><td></td><td></td><td>SDL DLRC BUZAU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>18</td><td></td><td></td><td>SIDU BUZĂU 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>19</td><td></td><td></td><td>CALARASI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>20</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>21</td><td></td><td></td><td>CAMPINA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>23</td><td></td><td></td><td>FONDUL LOCAL C10 PNRR</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>27</td><td></td><td></td><td>SDL CAMPINA 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>29</td><td></td><td></td><td>CDS</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>31</td><td></td><td></td><td>CHISINAU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>32</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>33</td><td></td><td></td><td>CJ ILFOV</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>35</td><td></td><td></td><td>CONSTANTA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>37</td><td></td><td></td><td>MNG. DESEURILOR PNRR C3 (2xCAV mic + CAV mare)</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>39</td><td></td><td></td><td>DAS MAGURELE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>41</td><td></td><td></td><td>DEVA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>43</td><td></td><td></td><td>DGASPC S5</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>45</td><td></td><td></td><td>MP SERVICII COMUNITARE DGASPC S5 PIDS</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>46</td><td>144/213984/213985</td><td>144/213984/2/3985</td><td>Muntii Carpati - Centre multifunctionale DGASPC S5 PIDS</td><td>381</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>47</td><td></td><td></td><td>Proiect PIDS-05. Terapii psihologice pentru copii - Centru Trompetului</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>48</td><td></td><td></td><td>Proiect PIDS-P05. Terapii psihilogice pentru copii- Centru Bacau</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>49</td><td></td><td></td><td>Proiect PIDS-P05.Sprijinirea tinerilor si copiilor in procesul de dezinstitutionalizare</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>50</td><td>145/6870/68702</td><td></td><td>Proiect Servicii Romi 1</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>52</td><td></td><td></td><td>DROBETA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>53</td><td></td><td></td><td>SIDU DROBETA TURNU-SEVERIN 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT ABSENT IN REGISTRU SI IN WRIKE</span></td><td>54</td><td></td><td></td><td>FOCSANI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>55</td><td></td><td></td><td>CF 1 POAT FOCSANI AUTOB NORD - S. SUD</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>56</td><td></td><td></td><td>CF 2 POAT FOCSANI AUTOB SUD</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>57</td><td></td><td></td><td>CF 3 POAT FOCSANI STRAPUNGERE NORD</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>58</td><td></td><td></td><td>SDL DLRC FOCSANI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>59</td><td></td><td></td><td>SIDU FOCȘANI 2014-2023</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>60</td><td></td><td></td><td>SIDU FOCSANI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT ABSENT IN REGISTRU SI IN WRIKE</span></td><td>62</td><td></td><td></td><td>GALATI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>68</td><td></td><td></td><td>SIDU GALATI 2016-2025</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>70</td><td></td><td></td><td>HINCESTI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>71</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>72</td><td></td><td></td><td>HOREZU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>75</td><td></td><td></td><td>IASI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>77</td><td></td><td></td><td>SIDU IASI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>78</td><td></td><td></td><td>MAGURELE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>80</td><td></td><td></td><td>MEHEDINTI CJ</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>81</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>82</td><td></td><td></td><td>MICROSOFT - MARIUS PADUREANU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>83</td><td></td><td></td><td>Banca de Gene - US</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>84</td><td></td><td></td><td>Masura 1.1 - Sprijin intreprinderi inovatoare</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>85</td><td></td><td></td><td>MP - POCIDIF - AgriFuture</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>86</td><td></td><td></td><td>NEAMT CJ</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>87</td><td></td><td></td><td>EDUCATIE PNRR C15 Microbuze</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>88</td><td></td><td></td><td>PIATRA NEAMT</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>89</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>90</td><td></td><td></td><td>SIDU PIATRA NEAMT 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>91</td><td></td><td></td><td>PITESTI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>93</td><td></td><td></td><td>PAED PITESTI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>94</td><td></td><td></td><td>SIDU PITEȘTI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>95</td><td></td><td></td><td>PLOIESTI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>98</td><td></td><td></td><td>PMB</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>99</td><td>141/200203</td><td></td><td>Sectorul 5 - PMB</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>100</td><td></td><td></td><td>RAMNICU VALCEA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>101</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>102</td><td></td><td></td><td>RM. SARAT</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>103</td><td></td><td></td><td>SIDU RAMNICU SARAT 2014-2023</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>104</td><td></td><td></td><td>ROSIORII DE VEDE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>106</td><td></td><td></td><td>SALROM</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>109</td><td></td><td></td><td>SECTOR 1</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>110</td><td>492</td><td></td><td>Extensie M4: Straulesti - Mogosoaia</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>111</td><td></td><td></td><td>SECTOR 2</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>112</td><td></td><td></td><td>SECTOR 3</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>115</td><td>276768</td><td></td><td>CONSULTARE NEB - GH. PETRAȘCU 7.1 7.3</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>118</td><td>276795</td><td></td><td>CONSULTARE NEB - TITANII 7.1 7.3</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>119</td><td></td><td></td><td>SECTOR 5</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>120</td><td>0</td><td></td><td>AFM APA CANAL - suport</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>47</td><td></td><td></td><td>Proiect PIDS-05. Terapii psihologice pentru copii - Centru Trompetului</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>48</td><td></td><td></td><td>Proiect PIDS-P05. Terapii psihilogice pentru copii- Centru Bacau</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>49</td><td></td><td></td><td>Proiect PIDS-P05.Sprijinirea tinerilor si copiilor in procesul de dezinstitutionalizare</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>50</td><td>145/6870/68702</td><td></td><td>Proiect Servicii Romi 1</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>52</td><td></td><td></td><td>DROBETA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>53</td><td></td><td></td><td>SIDU DROBETA TURNU-SEVERIN 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>54</td><td></td><td></td><td>FOCSANI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>55</td><td></td><td></td><td>CF 1 POAT FOCSANI AUTOB NORD - S. SUD</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>56</td><td></td><td></td><td>CF 2 POAT FOCSANI AUTOB SUD</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>57</td><td></td><td></td><td>CF 3 POAT FOCSANI STRAPUNGERE NORD</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>58</td><td></td><td></td><td>SDL DLRC FOCSANI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>59</td><td></td><td></td><td>SIDU FOCȘANI 2014-2023</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>60</td><td></td><td></td><td>SIDU FOCSANI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>62</td><td></td><td></td><td>GALATI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>68</td><td></td><td></td><td>SIDU GALATI 2016-2025</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>70</td><td></td><td></td><td>HINCESTI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>71</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>72</td><td></td><td></td><td>HOREZU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>75</td><td></td><td></td><td>IASI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>77</td><td></td><td></td><td>SIDU IASI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>78</td><td></td><td></td><td>MAGURELE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>80</td><td></td><td></td><td>MEHEDINTI CJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>81</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>82</td><td></td><td></td><td>MICROSOFT - MARIUS PADUREANU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>83</td><td></td><td></td><td>Banca de Gene - US</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>84</td><td></td><td></td><td>Masura 1.1 - Sprijin intreprinderi inovatoare</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>85</td><td></td><td></td><td>MP - POCIDIF - AgriFuture</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>86</td><td></td><td></td><td>NEAMT CJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>87</td><td></td><td></td><td>EDUCATIE PNRR C15 Microbuze</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>88</td><td></td><td></td><td>PIATRA NEAMT</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>89</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>90</td><td></td><td></td><td>SIDU PIATRA NEAMT 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>91</td><td></td><td></td><td>PITESTI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>93</td><td></td><td></td><td>PAED PITESTI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>94</td><td></td><td></td><td>SIDU PITEȘTI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>95</td><td></td><td></td><td>PLOIESTI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>98</td><td></td><td></td><td>PMB</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>99</td><td>141/200203</td><td></td><td>Sectorul 5 - PMB</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>100</td><td></td><td></td><td>RAMNICU VALCEA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>101</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>102</td><td></td><td></td><td>RM. SARAT</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>103</td><td></td><td></td><td>SIDU RAMNICU SARAT 2014-2023</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>104</td><td></td><td></td><td>ROSIORII DE VEDE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>106</td><td></td><td></td><td>SALROM</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>109</td><td></td><td></td><td>SECTOR 1</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>110</td><td>492</td><td></td><td>Extensie M4: Straulesti - Mogosoaia</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>111</td><td></td><td></td><td>SECTOR 2</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>112</td><td></td><td></td><td>SECTOR 3</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>115</td><td>276768</td><td></td><td>CONSULTARE NEB - GH. PETRAȘCU 7.1 7.3</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>118</td><td>276795</td><td></td><td>CONSULTARE NEB - TITANII 7.1 7.3</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>119</td><td></td><td></td><td>SECTOR 5</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>120</td><td>0</td><td></td><td>AFM APA CANAL - suport</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>121</td><td>241/20021</td><td>241/200201</td><td>AFM CLADIRI PUBLICE - Scoala 143</td><td>312</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>122</td><td>241/20021</td><td>241/200201</td><td>AFM CLADIRI PUBLICE - Scoala 147</td><td>312</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>124</td><td>0</td><td></td><td>CINEMATOGRAF CORSO - suport</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>124</td><td>0</td><td></td><td>CINEMATOGRAF CORSO - suport</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>125</td><td>48/145223</td><td>48 145223</td><td>Consultanta cladiri Bauhaus Inst Pneuftiziologie Marius Nasta - corp nou</td><td>417</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>126</td><td>48/145228</td><td></td><td>Consultanta cladiri Bauhaus Inst Pneuftiziologie Marius Nasta - proximitate</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>129</td><td>04/136669</td><td></td><td>DNSH - PR - I.G. DUCA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>135</td><td>0</td><td></td><td>Extindere și reabilitare sisteme de alimentare cu apă și canalizare pe Strada N.D. Cocea Strada Tiparniței și Intrarea Tiparniței Sector 5 Municipiul București - suport</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>126</td><td>48/145228</td><td></td><td>Consultanta cladiri Bauhaus Inst Pneuftiziologie Marius Nasta - proximitate</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>129</td><td>04/136669</td><td></td><td>DNSH - PR - I.G. DUCA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>135</td><td>0</td><td></td><td>Extindere și reabilitare sisteme de alimentare cu apă și canalizare pe Strada N.D. Cocea Strada Tiparniței și Intrarea Tiparniței Sector 5 Municipiul București - suport</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>136</td><td>195/214286</td><td>195-214286</td><td>FONDUL LOCAL PNRR C10</td><td>260</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>137</td><td>136718</td><td></td><td>I.G. Duca - Consolidare</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>140</td><td>0</td><td></td><td>SCOALA 127 CORP A - suport</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>141</td><td></td><td></td><td>SDL Sector 5 București 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>142</td><td></td><td></td><td>Strategia Smart City - Sector 5 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>143</td><td></td><td></td><td>SIBIU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>145</td><td></td><td></td><td>SLANIC MOLDOVA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>146</td><td></td><td></td><td>SDL SLANIC MOLDOVA 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>147</td><td></td><td></td><td>SLOBOZIA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>148</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>149</td><td></td><td></td><td>SIDU SLOBOZIA 2014-2020</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>150</td><td></td><td></td><td>SIDU SLOBOZIA 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>151</td><td></td><td></td><td>SOCEP</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>153</td><td></td><td></td><td>SPITAL HOREZU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>155</td><td>5870</td><td></td><td>Spital HOREZU Ambulatoriu</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>156</td><td></td><td></td><td>SUCEAVA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>157</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>161</td><td></td><td></td><td>TECUCI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>163</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>164</td><td></td><td></td><td>MNG. DESEURILOR PNRR C3 INSULE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>165</td><td></td><td></td><td>TG. JIU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>166</td><td></td><td></td><td>SIDU TARGU JIU 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>167</td><td></td><td></td><td>UMF</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>169</td><td></td><td></td><td>UNGHENI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>170</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>171</td><td></td><td></td><td>US PROIECTE INTERNE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>172</td><td></td><td></td><td>PNRR C7 - Competente digitale avansate in US</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>173</td><td></td><td></td><td>VASLUI CJ</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>174</td><td></td><td></td><td>AFM MICROBUZE SCOLARE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>175</td><td></td><td></td><td>ZM BOTOSANI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>176</td><td></td><td></td><td>2.2 GTX</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>137</td><td>136718</td><td></td><td>I.G. Duca - Consolidare</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>140</td><td>0</td><td></td><td>SCOALA 127 CORP A - suport</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>141</td><td></td><td></td><td>SDL Sector 5 București 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>142</td><td></td><td></td><td>Strategia Smart City - Sector 5 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>143</td><td></td><td></td><td>SIBIU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>145</td><td></td><td></td><td>SLANIC MOLDOVA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>146</td><td></td><td></td><td>SDL SLANIC MOLDOVA 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>147</td><td></td><td></td><td>SLOBOZIA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>148</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>149</td><td></td><td></td><td>SIDU SLOBOZIA 2014-2020</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>150</td><td></td><td></td><td>SIDU SLOBOZIA 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>151</td><td></td><td></td><td>SOCEP</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>153</td><td></td><td></td><td>SPITAL HOREZU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>155</td><td>5870</td><td></td><td>Spital HOREZU Ambulatoriu</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>156</td><td></td><td></td><td>SUCEAVA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>157</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>161</td><td></td><td></td><td>TECUCI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>163</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>164</td><td></td><td></td><td>MNG. DESEURILOR PNRR C3 INSULE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>165</td><td></td><td></td><td>TG. JIU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>166</td><td></td><td></td><td>SIDU TARGU JIU 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>167</td><td></td><td></td><td>UMF</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>169</td><td></td><td></td><td>UNGHENI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>170</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>171</td><td></td><td></td><td>US PROIECTE INTERNE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>172</td><td></td><td></td><td>PNRR C7 - Competente digitale avansate in US</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>173</td><td></td><td></td><td>VASLUI CJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>174</td><td></td><td></td><td>AFM MICROBUZE SCOLARE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>175</td><td></td><td></td><td>ZM BOTOSANI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>176</td><td></td><td></td><td>2.2 GTX</td><td>-</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -384,6 +402,17 @@
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>89</td><td>22857</td><td>SF Trafic Management</td><td>285</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>90</td><td>168</td><td>SF ITS INTEGRAT SMART GREEN MOBILITY</td><td>493</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>91</td><td>29364</td><td>PT, AT si Ex Modernizare parc auto</td><td>359</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>3</td><td>176240.0</td><td>PIRU</td><td>370</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>4</td><td>160323.0</td><td>ACTUALIZARE POAT CARTIERE REZIDENTIALE</td><td>377</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>5</td><td>16244.0</td><td>SF DAMBU</td><td>451</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>6</td><td>16850.0</td><td>DALI, PT Gradina Publica</td><td>373</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>96.0</td><td>DALI RADU BELLER</td><td>394</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>9</td><td>98726.0</td><td>DALI ZONA CENTRALA</td><td>490</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>11</td><td>148799.0</td><td>Proiectare Parc Pantelimon</td><td>422</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>12</td><td>152515.0</td><td>DALI, PT, AT Zona Inel II</td><td>199</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>13</td><td>43683.0</td><td>Acting Together for Green Cities-identificare zone , planuri conceptuale</td><td>408</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>14</td><td>91670.0</td><td>DALI zona Parc Teatru</td><td>473</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>17</td><td>1478.0</td><td>PUZ</td><td>316</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>3</td><td>36674</td><td>DALI pietonal</td><td>304</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>5</td><td>58</td><td>Expertiza tehnica si DALI sediul administratiei C1-C6</td><td>434</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>6</td><td>30</td><td>Proiectare si executie campus</td><td>445</td></tr>
@@ -475,28 +504,28 @@
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th><th onclick="sortTable(this, 6)">COD PROIECT</th></tr></thead>
                         <tbody>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>13</td><td>CDSF4301</td><td>CDSF04301</td><td>BUCURESTI - DTAC PT Relocare troleibuz Unirii</td><td>348</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>15</td><td>CDSF0108</td><td></td><td>BUCURESTI - SPF Aeroport</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>15</td><td>CDSF0108</td><td></td><td>BUCURESTI - SPF Aeroport</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>17</td><td>CDSF0508</td><td>CDSF0508_</td><td>BUCURESTI - STUDIU DE TRAFIC - UNIRII E2</td><td>349</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>34</td><td>106.066</td><td>106066</td><td>CALARASI - DNSH REABILITARE BRAT BORCEA</td><td>432</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>147058</td><td>147.058</td><td>CALARASI STUDII DNSH</td><td>369</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>43</td><td>2023/s 139-445422</td><td>2023/S 139-445422</td><td>CHIȘINĂU - STUDIU DE E-TICKETING</td><td>324</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>45</td><td>264</td><td></td><td>CONSTANTA - CS Autobuze PNRR</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>53</td><td>16</td><td></td><td>DROBETA - SF PT ITS STATII (subco)</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>54</td><td>12598</td><td></td><td>FOCSANI - SF PARCARE LEOPOLDINA</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>59</td><td>4866</td><td></td><td>HOREZU - STUDIU DE TRAFIC</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>61</td><td></td><td></td><td>MODESHIFT - CONCEPT TEHNIC</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>62</td><td>1-7633</td><td></td><td>ODOBESTI - PT INTEGRAT</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>63</td><td>35889</td><td></td><td>PIATRA NEAMT - DALI PT POAT MOBILITATE</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>45</td><td>264</td><td></td><td>CONSTANTA - CS Autobuze PNRR</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>53</td><td>16</td><td></td><td>DROBETA - SF PT ITS STATII (subco)</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>54</td><td>12598</td><td></td><td>FOCSANI - SF PARCARE LEOPOLDINA</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>59</td><td>4866</td><td></td><td>HOREZU - STUDIU DE TRAFIC</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>61</td><td></td><td></td><td>MODESHIFT - CONCEPT TEHNIC</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>62</td><td>1-7633</td><td></td><td>ODOBESTI - PT INTEGRAT</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>63</td><td>35889</td><td></td><td>PIATRA NEAMT - DALI PT POAT MOBILITATE</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>64</td><td>1151/17.09.2025</td><td>12151</td><td>PIATRA NEAMT - DTAC+PT Modificare POAT</td><td>479</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>67</td><td>49</td><td></td><td>RM VALCEA - SO SI STRATEGIE DELEGARE TRANSPORT</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>73</td><td>493</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Baneasa</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>67</td><td>49</td><td></td><td>RM VALCEA - SO SI STRATEGIE DELEGARE TRANSPORT</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>73</td><td>493</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Baneasa</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>74</td><td>495</td><td>4795</td><td>SECTOR 1 - DTAC PT Suprainaltate Bucurestii Noi</td><td>275</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>75</td><td>494</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Grivita</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>76</td><td>491</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Piata Romana</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>75</td><td>494</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Grivita</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>76</td><td>491</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Piata Romana</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>79</td><td>2/137516</td><td>137516</td><td>Sector 5 - Treceri de pietoni suprainaltate</td><td>411</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>82</td><td>8810</td><td></td><td>SUCEAVA - CS Autobuze PNRR</td><td>232</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>85</td><td>8810</td><td></td><td>SUCEAVA - SF PT TP ETAPA 1</td><td>232</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>92</td><td>7610</td><td></td><td>VASLUI - SO MICROBUZE SCOLARE</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>92</td><td>7610</td><td></td><td>VASLUI - SO MICROBUZE SCOLARE</td><td>-</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -578,30 +607,19 @@
         </div>
         <div id="export1" class="export-content ">
             <div class="inner-tabs">
-                <button class="inner-tab active" onclick="showInner(1, 'prob', this)">Probleme (16)</button>
-                <button class="inner-tab" onclick="showInner(1, 'valid', this)">Valide (0)</button>
+                <button class="inner-tab active" onclick="showInner(1, 'prob', this)">Probleme (5)</button>
+                <button class="inner-tab" onclick="showInner(1, 'valid', this)">Valide (11)</button>
             </div>
             <div id="export1prob" class="inner-content active">
                 <div class="table-wrapper">
                     <table id="tableExp1Prob">
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th><th onclick="sortTable(this, 6)">COD PROIECT</th></tr></thead>
                         <tbody>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>2</td><td></td><td></td><td>BUCUREȘTI - REAMENAJAREA PARCULUI NAȚIONAL - INSTALAȚII ELECTRICE</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>3</td><td>176240.0</td><td>176240</td><td>BUZĂU - PLAN INTEGRAT DE REGENERARE URBANA_1</td><td>370</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>4</td><td>160323.0</td><td>160323</td><td>CĂLĂRAȘI - POAT - REGENERARE URBANĂ CARTIERE - ACTUALIZARE</td><td>377</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>5</td><td>16244.0</td><td></td><td>PLOIESTI - REGENERARE PARAUL DAMBU</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>6</td><td>16850.0</td><td></td><td>ROȘIORII DE VEDE - REGENERARE URBANĂ PARC GRĂDINĂ PUBLICĂ</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>7</td><td>218424.0</td><td></td><td>BUCUREȘTI SECTOR 3 - PASAJ LAMINORULUI</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>8</td><td>96.0</td><td></td><td>AMENAJAREA SCUARULUI DE LA INTERSECȚIA STRĂZILOR CALEA DOROBANȚI CU STRADA RADU BELLER</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>9</td><td>98726.0</td><td></td><td>FOCȘANI - DALI REGENERARE URBANĂ A ZONEI CENTRALE A MUNICIPIULUI FOCȘANI</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>10</td><td>369.0</td><td></td><td>BUCUREȘTI SECTOR 1 - Masterplan de regenerare urbană</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>11</td><td>148799.0</td><td>148799</td><td>BUCUREȘTI SECTOR 3 - PARC PANTELIMON</td><td>422</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>12</td><td>152515.0</td><td>152515</td><td>CONSTANȚA - DALI PT - Inel 2</td><td>199</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>13</td><td>43683.0</td><td></td><td>CONSTANȚA - Greener Cities</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>14</td><td>91670.0</td><td></td><td>FOCȘANI - DALI REABILITARE SI REGENERARE ZONA PARC TEATRU</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>15</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare a Falezei Dunării</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>16</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare Valea Țiglinei</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>17</td><td>1478.0</td><td></td><td>PUZ - CAV ADI Bucuresti</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>2</td><td></td><td></td><td>BUCUREȘTI - REAMENAJAREA PARCULUI NAȚIONAL - INSTALAȚII ELECTRICE</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>7</td><td>218424.0</td><td></td><td>BUCUREȘTI SECTOR 3 - PASAJ LAMINORULUI</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>10</td><td>369.0</td><td></td><td>BUCUREȘTI SECTOR 1 - Masterplan de regenerare urbană</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>15</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare a Falezei Dunării</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>16</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare Valea Țiglinei</td><td>-</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -611,6 +629,17 @@
                     <table id="tableExp1Valid">
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Proiect</th><th onclick="sortTable(this, 5)">COD PROIECT</th></tr></thead>
                         <tbody>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>3</td><td>176240.0</td><td>PIRU</td><td>370</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>4</td><td>160323.0</td><td>ACTUALIZARE POAT CARTIERE REZIDENTIALE</td><td>377</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>5</td><td>16244.0</td><td>SF DAMBU</td><td>451</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>6</td><td>16850.0</td><td>DALI, PT Gradina Publica</td><td>373</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>96.0</td><td>DALI RADU BELLER</td><td>394</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>9</td><td>98726.0</td><td>DALI ZONA CENTRALA</td><td>490</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>11</td><td>148799.0</td><td>Proiectare Parc Pantelimon</td><td>422</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>12</td><td>152515.0</td><td>DALI, PT, AT Zona Inel II</td><td>199</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>13</td><td>43683.0</td><td>Acting Together for Green Cities-identificare zone , planuri conceptuale</td><td>408</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>14</td><td>91670.0</td><td>DALI zona Parc Teatru</td><td>473</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>17</td><td>1478.0</td><td>PUZ</td><td>316</td></tr>
                         </tbody></table></div></div>
         </div>
         <div id="export2" class="export-content ">
@@ -623,38 +652,38 @@
                     <table id="tableExp2Prob">
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th><th onclick="sortTable(this, 6)">COD PROIECT</th></tr></thead>
                         <tbody>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>2</td><td>1320/01</td><td></td><td>AFER - SF HALA FAUREI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>4</td><td>8599</td><td></td><td>ALEXANDRIA PT Pietonal</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>7</td><td>Q213.00_0707.D</td><td></td><td>BACAU - DTAC+PT Sistematizare si Peisagere Campus</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Alte studii conform CU: nZEB</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>13</td><td></td><td></td><td>Audit energetic - se preda la asistenta tehnica</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>14</td><td></td><td></td><td>Capitolul privind economia circulara</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>15</td><td></td><td></td><td>Documentatie emitere CU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>16</td><td></td><td></td><td>Documentatii avize PSI si protectie civila</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>17</td><td></td><td></td><td>Documentatii avize si acorduri</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>18</td><td></td><td></td><td>DTAC + DTOE (Verificate)</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>19</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>20</td><td></td><td></td><td>PT (Verificat)</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>21</td><td></td><td></td><td>Standarde si proceduri mentenanta</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>22</td><td></td><td></td><td>Studii pentru obtinerea acordurilor/avizelor de mediu</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>23</td><td></td><td></td><td>Studiu de fezabilitate</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>24</td><td></td><td></td><td>Studiu de impact Arhitectural si Urbanistic</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>25</td><td></td><td></td><td>Studiu de TRAFIC si calculul emisiilor GES</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>26</td><td></td><td></td><td>Studiu DNSH si imunizare</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>27</td><td></td><td></td><td>Studiu GEO</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>28</td><td></td><td></td><td>Studiu privind utilizarea unor sisteme alternative</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>29</td><td></td><td></td><td>Studiu TOPO</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>32</td><td></td><td></td><td>1. IMPARTIRE ACTIVITATI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>33</td><td></td><td></td><td>2. OBTINERE CERTIFICAT DE URBANISM</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>34</td><td></td><td></td><td>3. EXPERTIZA TEHNICA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>35</td><td></td><td></td><td>4. DALI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>36</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>2</td><td>1320/01</td><td></td><td>AFER - SF HALA FAUREI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>4</td><td>8599</td><td></td><td>ALEXANDRIA PT Pietonal</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>7</td><td>Q213.00_0707.D</td><td></td><td>BACAU - DTAC+PT Sistematizare si Peisagere Campus</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Alte studii conform CU: nZEB</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>13</td><td></td><td></td><td>Audit energetic - se preda la asistenta tehnica</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>14</td><td></td><td></td><td>Capitolul privind economia circulara</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>15</td><td></td><td></td><td>Documentatie emitere CU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>16</td><td></td><td></td><td>Documentatii avize PSI si protectie civila</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>17</td><td></td><td></td><td>Documentatii avize si acorduri</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>18</td><td></td><td></td><td>DTAC + DTOE (Verificate)</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>19</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>20</td><td></td><td></td><td>PT (Verificat)</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>21</td><td></td><td></td><td>Standarde si proceduri mentenanta</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>22</td><td></td><td></td><td>Studii pentru obtinerea acordurilor/avizelor de mediu</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>23</td><td></td><td></td><td>Studiu de fezabilitate</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>24</td><td></td><td></td><td>Studiu de impact Arhitectural si Urbanistic</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>25</td><td></td><td></td><td>Studiu de TRAFIC si calculul emisiilor GES</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>26</td><td></td><td></td><td>Studiu DNSH si imunizare</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>27</td><td></td><td></td><td>Studiu GEO</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>28</td><td></td><td></td><td>Studiu privind utilizarea unor sisteme alternative</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>29</td><td></td><td></td><td>Studiu TOPO</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>32</td><td></td><td></td><td>1. IMPARTIRE ACTIVITATI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>33</td><td></td><td></td><td>2. OBTINERE CERTIFICAT DE URBANISM</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>34</td><td></td><td></td><td>3. EXPERTIZA TEHNICA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>35</td><td></td><td></td><td>4. DALI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>36</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>80/149560/</td><td>80/149560</td><td>EXPERTIZE TEHNICE SCOALA 126&103</td><td>420</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>40</td><td></td><td></td><td>HOREZU - DTAC SPITAL</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>40</td><td></td><td></td><td>HOREZU - DTAC SPITAL</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>47</td><td>2/137516</td><td>137516</td><td>Sector 5 - PT Scoala 103</td><td>411</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>48</td><td>2/137516</td><td>137516</td><td>Sector 5 - PT Scoala 126</td><td>411</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>51</td><td></td><td></td><td>SF CAV BUZAU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>53</td><td>144-13476-RU13477</td><td></td><td>SF DALI Centru str. Muntii carpati S5 PIDS</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>51</td><td></td><td></td><td>SF CAV BUZAU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>53</td><td>144-13476-RU13477</td><td></td><td>SF DALI Centru str. Muntii carpati S5 PIDS</td><td>-</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -699,126 +728,126 @@
                     <table id="tableExp3Prob">
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th><th onclick="sortTable(this, 6)">COD PROIECT</th></tr></thead>
                         <tbody>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>2</td><td></td><td></td><td>2.1 US</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>3</td><td></td><td></td><td>ASPMB</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>5</td><td></td><td></td><td>BOTOSANI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>6</td><td></td><td></td><td>EDUCATIE PNRR C5 scoli verzi</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>7</td><td></td><td></td><td>EDUCATIE PNRR C15 dotari</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>9</td><td></td><td></td><td>SIDU BOTOȘANI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>10</td><td></td><td></td><td>BRASOV</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>11</td><td></td><td></td><td>BUZAU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Buzau M100</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>14</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>15</td><td></td><td></td><td>M100 - Climate City Contract</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>16</td><td></td><td></td><td>SCOLI VERZI PNRR</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>17</td><td></td><td></td><td>SDL DLRC BUZAU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>18</td><td></td><td></td><td>SIDU BUZĂU 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>19</td><td></td><td></td><td>CALARASI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>20</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>21</td><td></td><td></td><td>CAMPINA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>23</td><td></td><td></td><td>FONDUL LOCAL C10 PNRR</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>27</td><td></td><td></td><td>SDL CAMPINA 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>29</td><td></td><td></td><td>CDS</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>31</td><td></td><td></td><td>CHISINAU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>32</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>33</td><td></td><td></td><td>CJ ILFOV</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>35</td><td></td><td></td><td>CONSTANTA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>37</td><td></td><td></td><td>MNG. DESEURILOR PNRR C3 (2xCAV mic + CAV mare)</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>39</td><td></td><td></td><td>DAS MAGURELE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>41</td><td></td><td></td><td>DEVA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>43</td><td></td><td></td><td>DGASPC S5</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>45</td><td></td><td></td><td>MP SERVICII COMUNITARE DGASPC S5 PIDS</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>2</td><td></td><td></td><td>2.1 US</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>3</td><td></td><td></td><td>ASPMB</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>5</td><td></td><td></td><td>BOTOSANI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>6</td><td></td><td></td><td>EDUCATIE PNRR C5 scoli verzi</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>7</td><td></td><td></td><td>EDUCATIE PNRR C15 dotari</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>9</td><td></td><td></td><td>SIDU BOTOȘANI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>10</td><td></td><td></td><td>BRASOV</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>11</td><td></td><td></td><td>BUZAU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Buzau M100</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>14</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>15</td><td></td><td></td><td>M100 - Climate City Contract</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>16</td><td></td><td></td><td>SCOLI VERZI PNRR</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>17</td><td></td><td></td><td>SDL DLRC BUZAU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>18</td><td></td><td></td><td>SIDU BUZĂU 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>19</td><td></td><td></td><td>CALARASI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>20</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>21</td><td></td><td></td><td>CAMPINA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>23</td><td></td><td></td><td>FONDUL LOCAL C10 PNRR</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>27</td><td></td><td></td><td>SDL CAMPINA 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>29</td><td></td><td></td><td>CDS</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>31</td><td></td><td></td><td>CHISINAU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>32</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>33</td><td></td><td></td><td>CJ ILFOV</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>35</td><td></td><td></td><td>CONSTANTA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>37</td><td></td><td></td><td>MNG. DESEURILOR PNRR C3 (2xCAV mic + CAV mare)</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>39</td><td></td><td></td><td>DAS MAGURELE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>41</td><td></td><td></td><td>DEVA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>43</td><td></td><td></td><td>DGASPC S5</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>45</td><td></td><td></td><td>MP SERVICII COMUNITARE DGASPC S5 PIDS</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>46</td><td>144/213984/213985</td><td>144/213984/2/3985</td><td>Muntii Carpati - Centre multifunctionale DGASPC S5 PIDS</td><td>381</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>47</td><td></td><td></td><td>Proiect PIDS-05. Terapii psihologice pentru copii - Centru Trompetului</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>48</td><td></td><td></td><td>Proiect PIDS-P05. Terapii psihilogice pentru copii- Centru Bacau</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>49</td><td></td><td></td><td>Proiect PIDS-P05.Sprijinirea tinerilor si copiilor in procesul de dezinstitutionalizare</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>50</td><td>145/6870/68702</td><td></td><td>Proiect Servicii Romi 1</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>52</td><td></td><td></td><td>DROBETA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>53</td><td></td><td></td><td>SIDU DROBETA TURNU-SEVERIN 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT ABSENT IN REGISTRU SI IN WRIKE</span></td><td>54</td><td></td><td></td><td>FOCSANI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>55</td><td></td><td></td><td>CF 1 POAT FOCSANI AUTOB NORD - S. SUD</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>56</td><td></td><td></td><td>CF 2 POAT FOCSANI AUTOB SUD</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>57</td><td></td><td></td><td>CF 3 POAT FOCSANI STRAPUNGERE NORD</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>58</td><td></td><td></td><td>SDL DLRC FOCSANI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>59</td><td></td><td></td><td>SIDU FOCȘANI 2014-2023</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>60</td><td></td><td></td><td>SIDU FOCSANI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT ABSENT IN REGISTRU SI IN WRIKE</span></td><td>62</td><td></td><td></td><td>GALATI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>68</td><td></td><td></td><td>SIDU GALATI 2016-2025</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>70</td><td></td><td></td><td>HINCESTI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>71</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>72</td><td></td><td></td><td>HOREZU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>75</td><td></td><td></td><td>IASI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>77</td><td></td><td></td><td>SIDU IASI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>78</td><td></td><td></td><td>MAGURELE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>80</td><td></td><td></td><td>MEHEDINTI CJ</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>81</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>82</td><td></td><td></td><td>MICROSOFT - MARIUS PADUREANU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>83</td><td></td><td></td><td>Banca de Gene - US</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>84</td><td></td><td></td><td>Masura 1.1 - Sprijin intreprinderi inovatoare</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>85</td><td></td><td></td><td>MP - POCIDIF - AgriFuture</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>86</td><td></td><td></td><td>NEAMT CJ</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>87</td><td></td><td></td><td>EDUCATIE PNRR C15 Microbuze</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>88</td><td></td><td></td><td>PIATRA NEAMT</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>89</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>90</td><td></td><td></td><td>SIDU PIATRA NEAMT 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>91</td><td></td><td></td><td>PITESTI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>93</td><td></td><td></td><td>PAED PITESTI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>94</td><td></td><td></td><td>SIDU PITEȘTI 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>95</td><td></td><td></td><td>PLOIESTI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>98</td><td></td><td></td><td>PMB</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>99</td><td>141/200203</td><td></td><td>Sectorul 5 - PMB</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>100</td><td></td><td></td><td>RAMNICU VALCEA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>101</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>102</td><td></td><td></td><td>RM. SARAT</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>103</td><td></td><td></td><td>SIDU RAMNICU SARAT 2014-2023</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>104</td><td></td><td></td><td>ROSIORII DE VEDE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>106</td><td></td><td></td><td>SALROM</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>109</td><td></td><td></td><td>SECTOR 1</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>110</td><td>492</td><td></td><td>Extensie M4: Straulesti - Mogosoaia</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>111</td><td></td><td></td><td>SECTOR 2</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>112</td><td></td><td></td><td>SECTOR 3</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>115</td><td>276768</td><td></td><td>CONSULTARE NEB - GH. PETRAȘCU 7.1 7.3</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>118</td><td>276795</td><td></td><td>CONSULTARE NEB - TITANII 7.1 7.3</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>119</td><td></td><td></td><td>SECTOR 5</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>120</td><td>0</td><td></td><td>AFM APA CANAL - suport</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>47</td><td></td><td></td><td>Proiect PIDS-05. Terapii psihologice pentru copii - Centru Trompetului</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>48</td><td></td><td></td><td>Proiect PIDS-P05. Terapii psihilogice pentru copii- Centru Bacau</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>49</td><td></td><td></td><td>Proiect PIDS-P05.Sprijinirea tinerilor si copiilor in procesul de dezinstitutionalizare</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>50</td><td>145/6870/68702</td><td></td><td>Proiect Servicii Romi 1</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>52</td><td></td><td></td><td>DROBETA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>53</td><td></td><td></td><td>SIDU DROBETA TURNU-SEVERIN 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>54</td><td></td><td></td><td>FOCSANI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>55</td><td></td><td></td><td>CF 1 POAT FOCSANI AUTOB NORD - S. SUD</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>56</td><td></td><td></td><td>CF 2 POAT FOCSANI AUTOB SUD</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>57</td><td></td><td></td><td>CF 3 POAT FOCSANI STRAPUNGERE NORD</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>58</td><td></td><td></td><td>SDL DLRC FOCSANI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>59</td><td></td><td></td><td>SIDU FOCȘANI 2014-2023</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>60</td><td></td><td></td><td>SIDU FOCSANI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>62</td><td></td><td></td><td>GALATI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>68</td><td></td><td></td><td>SIDU GALATI 2016-2025</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>70</td><td></td><td></td><td>HINCESTI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>71</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>72</td><td></td><td></td><td>HOREZU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>75</td><td></td><td></td><td>IASI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>77</td><td></td><td></td><td>SIDU IASI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>78</td><td></td><td></td><td>MAGURELE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>80</td><td></td><td></td><td>MEHEDINTI CJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>81</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>82</td><td></td><td></td><td>MICROSOFT - MARIUS PADUREANU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>83</td><td></td><td></td><td>Banca de Gene - US</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>84</td><td></td><td></td><td>Masura 1.1 - Sprijin intreprinderi inovatoare</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>85</td><td></td><td></td><td>MP - POCIDIF - AgriFuture</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>86</td><td></td><td></td><td>NEAMT CJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>87</td><td></td><td></td><td>EDUCATIE PNRR C15 Microbuze</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>88</td><td></td><td></td><td>PIATRA NEAMT</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>89</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>90</td><td></td><td></td><td>SIDU PIATRA NEAMT 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>91</td><td></td><td></td><td>PITESTI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>93</td><td></td><td></td><td>PAED PITESTI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>94</td><td></td><td></td><td>SIDU PITEȘTI 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>95</td><td></td><td></td><td>PLOIESTI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>98</td><td></td><td></td><td>PMB</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>99</td><td>141/200203</td><td></td><td>Sectorul 5 - PMB</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>100</td><td></td><td></td><td>RAMNICU VALCEA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>101</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>102</td><td></td><td></td><td>RM. SARAT</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>103</td><td></td><td></td><td>SIDU RAMNICU SARAT 2014-2023</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>104</td><td></td><td></td><td>ROSIORII DE VEDE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>106</td><td></td><td></td><td>SALROM</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>109</td><td></td><td></td><td>SECTOR 1</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>110</td><td>492</td><td></td><td>Extensie M4: Straulesti - Mogosoaia</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>111</td><td></td><td></td><td>SECTOR 2</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>112</td><td></td><td></td><td>SECTOR 3</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>115</td><td>276768</td><td></td><td>CONSULTARE NEB - GH. PETRAȘCU 7.1 7.3</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>118</td><td>276795</td><td></td><td>CONSULTARE NEB - TITANII 7.1 7.3</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>119</td><td></td><td></td><td>SECTOR 5</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>120</td><td>0</td><td></td><td>AFM APA CANAL - suport</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>121</td><td>241/20021</td><td>241/200201</td><td>AFM CLADIRI PUBLICE - Scoala 143</td><td>312</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>122</td><td>241/20021</td><td>241/200201</td><td>AFM CLADIRI PUBLICE - Scoala 147</td><td>312</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>124</td><td>0</td><td></td><td>CINEMATOGRAF CORSO - suport</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>124</td><td>0</td><td></td><td>CINEMATOGRAF CORSO - suport</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>125</td><td>48/145223</td><td>48 145223</td><td>Consultanta cladiri Bauhaus Inst Pneuftiziologie Marius Nasta - corp nou</td><td>417</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>126</td><td>48/145228</td><td></td><td>Consultanta cladiri Bauhaus Inst Pneuftiziologie Marius Nasta - proximitate</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>129</td><td>04/136669</td><td></td><td>DNSH - PR - I.G. DUCA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>135</td><td>0</td><td></td><td>Extindere și reabilitare sisteme de alimentare cu apă și canalizare pe Strada N.D. Cocea Strada Tiparniței și Intrarea Tiparniței Sector 5 Municipiul București - suport</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>126</td><td>48/145228</td><td></td><td>Consultanta cladiri Bauhaus Inst Pneuftiziologie Marius Nasta - proximitate</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>129</td><td>04/136669</td><td></td><td>DNSH - PR - I.G. DUCA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>135</td><td>0</td><td></td><td>Extindere și reabilitare sisteme de alimentare cu apă și canalizare pe Strada N.D. Cocea Strada Tiparniței și Intrarea Tiparniței Sector 5 Municipiul București - suport</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>136</td><td>195/214286</td><td>195-214286</td><td>FONDUL LOCAL PNRR C10</td><td>260</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>137</td><td>136718</td><td></td><td>I.G. Duca - Consolidare</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>140</td><td>0</td><td></td><td>SCOALA 127 CORP A - suport</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>141</td><td></td><td></td><td>SDL Sector 5 București 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>142</td><td></td><td></td><td>Strategia Smart City - Sector 5 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>143</td><td></td><td></td><td>SIBIU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>145</td><td></td><td></td><td>SLANIC MOLDOVA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>146</td><td></td><td></td><td>SDL SLANIC MOLDOVA 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>147</td><td></td><td></td><td>SLOBOZIA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>148</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>149</td><td></td><td></td><td>SIDU SLOBOZIA 2014-2020</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>150</td><td></td><td></td><td>SIDU SLOBOZIA 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>151</td><td></td><td></td><td>SOCEP</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>153</td><td></td><td></td><td>SPITAL HOREZU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>155</td><td>5870</td><td></td><td>Spital HOREZU Ambulatoriu</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>156</td><td></td><td></td><td>SUCEAVA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>157</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>161</td><td></td><td></td><td>TECUCI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>163</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>164</td><td></td><td></td><td>MNG. DESEURILOR PNRR C3 INSULE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>165</td><td></td><td></td><td>TG. JIU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>166</td><td></td><td></td><td>SIDU TARGU JIU 2021-2027</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>167</td><td></td><td></td><td>UMF</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>169</td><td></td><td></td><td>UNGHENI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>170</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>171</td><td></td><td></td><td>US PROIECTE INTERNE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>172</td><td></td><td></td><td>PNRR C7 - Competente digitale avansate in US</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>173</td><td></td><td></td><td>VASLUI CJ</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>174</td><td></td><td></td><td>AFM MICROBUZE SCOLARE</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>175</td><td></td><td></td><td>ZM BOTOSANI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>176</td><td></td><td></td><td>2.2 GTX</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>137</td><td>136718</td><td></td><td>I.G. Duca - Consolidare</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>140</td><td>0</td><td></td><td>SCOALA 127 CORP A - suport</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>141</td><td></td><td></td><td>SDL Sector 5 București 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>142</td><td></td><td></td><td>Strategia Smart City - Sector 5 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>143</td><td></td><td></td><td>SIBIU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>145</td><td></td><td></td><td>SLANIC MOLDOVA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>146</td><td></td><td></td><td>SDL SLANIC MOLDOVA 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>147</td><td></td><td></td><td>SLOBOZIA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>148</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>149</td><td></td><td></td><td>SIDU SLOBOZIA 2014-2020</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>150</td><td></td><td></td><td>SIDU SLOBOZIA 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>151</td><td></td><td></td><td>SOCEP</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>153</td><td></td><td></td><td>SPITAL HOREZU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>155</td><td>5870</td><td></td><td>Spital HOREZU Ambulatoriu</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>156</td><td></td><td></td><td>SUCEAVA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>157</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>161</td><td></td><td></td><td>TECUCI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>163</td><td></td><td></td><td>FONDUL LOCAL PNRR C10</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>164</td><td></td><td></td><td>MNG. DESEURILOR PNRR C3 INSULE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>165</td><td></td><td></td><td>TG. JIU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>166</td><td></td><td></td><td>SIDU TARGU JIU 2021-2027</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>167</td><td></td><td></td><td>UMF</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>169</td><td></td><td></td><td>UNGHENI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>170</td><td>01/24</td><td></td><td>INTERREG</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>171</td><td></td><td></td><td>US PROIECTE INTERNE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>172</td><td></td><td></td><td>PNRR C7 - Competente digitale avansate in US</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>173</td><td></td><td></td><td>VASLUI CJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>174</td><td></td><td></td><td>AFM MICROBUZE SCOLARE</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>175</td><td></td><td></td><td>ZM BOTOSANI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (CF - STRATEGII  (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>176</td><td></td><td></td><td>2.2 GTX</td><td>-</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -890,13 +919,13 @@
     </div>
     <script>
         Chart.register(ChartDataLabels);
-        const exportStats = {"-1": {"valid": 146, "duplicate": 2, "typo": 20, "empty": 128, "notfound": 41}, "0": {"valid": 68, "duplicate": 2, "typo": 8, "empty": 1, "notfound": 12}, "1": {"valid": 0, "duplicate": 0, "typo": 4, "empty": 3, "notfound": 9}, "2": {"valid": 23, "duplicate": 0, "typo": 3, "empty": 25, "notfound": 4}, "3": {"valid": 55, "duplicate": 0, "typo": 5, "empty": 99, "notfound": 16}};
+        const exportStats = {"-1": {"valid": 157, "duplicate": 2, "typo": 16, "empty": 128, "notfound": 34}, "0": {"valid": 68, "duplicate": 2, "typo": 8, "empty": 1, "notfound": 12}, "1": {"valid": 11, "duplicate": 0, "typo": 0, "empty": 3, "notfound": 2}, "2": {"valid": 23, "duplicate": 0, "typo": 3, "empty": 25, "notfound": 4}, "3": {"valid": 55, "duplicate": 0, "typo": 5, "empty": 99, "notfound": 16}};
         const ctx = document.getElementById('pieChart');
         const pieChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Inexistente'],
-                datasets: [{ data: [146, 2, 20, 128, 41], backgroundColor: ['#27ae60', '#9b59b6', '#3498db', '#f39c12', '#e74c3c'], borderWidth: 0 }]
+                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Necorelate'],
+                datasets: [{ data: [157, 2, 16, 128, 34], backgroundColor: ['#27ae60', '#9b59b6', '#3498db', '#f39c12', '#e74c3c'], borderWidth: 0 }]
             },
             options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#aaa' } } } }
         });
@@ -958,6 +987,18 @@
 
             // Re-append sorted rows
             rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function toggleDuplicates() {
+            const list = document.getElementById('duplicate-list');
+            const icon = document.getElementById('dup-toggle');
+            if (list.style.display === 'none') {
+                list.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                list.style.display = 'none';
+                icon.textContent = '▼';
+            }
         }
     </script>
 </body>

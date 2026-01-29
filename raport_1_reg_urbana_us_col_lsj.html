@@ -56,6 +56,18 @@
         .registry-item.found { border-left: 3px solid #27ae60; }
         .registry-item.notfound { border-left: 3px solid #e74c3c; }
         .registry-item.nocontract { border-left: 3px solid #f39c12; }
+        .registry-item.duplicate { border-left: 3px solid #e74c3c; background: rgba(231, 76, 60, 0.1); }
+        .registry-item.ok { border-left: 3px solid #27ae60; }
+        .registry-item.total-unique { border-left: 3px solid #3498db; background: rgba(52, 152, 219, 0.1); }
+        .duplicate-warning { margin-top: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; border-radius: 8px; overflow: hidden; }
+        .duplicate-header { padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: #e74c3c; font-weight: 500; }
+        .duplicate-header:hover { background: rgba(231, 76, 60, 0.15); }
+        .toggle-icon { transition: transform 0.3s; }
+        .duplicate-details { padding: 15px; background: rgba(0,0,0,0.2); }
+        .duplicate-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .duplicate-table th { text-align: left; padding: 8px; border-bottom: 1px solid #444; color: #888; }
+        .duplicate-table td { padding: 8px; border-bottom: 1px solid #333; color: #ccc; }
+        .duplicate-table tr:last-child td { border-bottom: none; }
         footer { text-align: center; padding: 20px; color: #666; font-size: 0.85em; }
     </style>
 </head>
@@ -63,45 +75,34 @@
     <div class="container">
         <header>
             <h1>Raport Echipa - 1  REG URBANA US (Col L/S/J)</h1>
-            <div class="subtitle">Total: 16 intrari | Generat: 29.01.2026 11:01</div>
+            <div class="subtitle">Total: 16 intrari | Generat: 29.01.2026 14:47</div>
         </header>
         
         <div class="dashboard">
             <div class="cards">
-                <div class="card valid"><h2 id="statValid">0</h2><div class="pct" id="pctValid">0.0%</div><p>Coduri Valide</p></div>
+                <div class="card valid"><h2 id="statValid">11</h2><div class="pct" id="pctValid">68.8%</div><p>Coduri Valide</p></div>
                 <div class="card duplicate"><h2 id="statDuplicate">0</h2><div class="pct" id="pctDuplicate">0.0%</div><p>Duplicate</p></div>
-                <div class="card typo"><h2 id="statTypo">4</h2><div class="pct" id="pctTypo">25.0%</div><p>Posibile Erori</p></div>
+                <div class="card typo"><h2 id="statTypo">0</h2><div class="pct" id="pctTypo">0.0%</div><p>Posibile Erori</p></div>
                 <div class="card empty"><h2 id="statEmpty">3</h2><div class="pct" id="pctEmpty">18.8%</div><p>Necompletate</p></div>
-                <div class="card notfound"><h2 id="statNotfound">9</h2><div class="pct" id="pctNotfound">56.2%</div><p>Inexistente</p></div>
+                <div class="card notfound"><h2 id="statNotfound">2</h2><div class="pct" id="pctNotfound">12.5%</div><p>Necorelate</p></div>
             </div>
             <div class="chart-container"><canvas id="pieChart" width="250" height="250"></canvas></div>
         </div>
         <div id="export-1" class="export-content active">
             <div class="inner-tabs">
-                <button class="inner-tab active" onclick="showInner(-1, 'prob', this)">Probleme (16)</button>
-                <button class="inner-tab" onclick="showInner(-1, 'valid', this)">Valide (0)</button>
+                <button class="inner-tab active" onclick="showInner(-1, 'prob', this)">Probleme (5)</button>
+                <button class="inner-tab" onclick="showInner(-1, 'valid', this)">Valide (11)</button>
             </div>
             <div id="export-1prob" class="inner-content active">
                 <div class="table-wrapper">
                     <table id="tableMasterProb">
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th><th onclick="sortTable(this, 6)">COD PROIECT</th></tr></thead>
                         <tbody>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>2</td><td></td><td></td><td>BUCUREȘTI - REAMENAJAREA PARCULUI NAȚIONAL - INSTALAȚII ELECTRICE</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>3</td><td>176240.0</td><td>176240</td><td>BUZĂU - PLAN INTEGRAT DE REGENERARE URBANA_1</td><td>370</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>4</td><td>160323.0</td><td>160323</td><td>CĂLĂRAȘI - POAT - REGENERARE URBANĂ CARTIERE - ACTUALIZARE</td><td>377</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>5</td><td>16244.0</td><td></td><td>PLOIESTI - REGENERARE PARAUL DAMBU</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>6</td><td>16850.0</td><td></td><td>ROȘIORII DE VEDE - REGENERARE URBANĂ PARC GRĂDINĂ PUBLICĂ</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>7</td><td>218424.0</td><td></td><td>BUCUREȘTI SECTOR 3 - PASAJ LAMINORULUI</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>8</td><td>96.0</td><td></td><td>AMENAJAREA SCUARULUI DE LA INTERSECȚIA STRĂZILOR CALEA DOROBANȚI CU STRADA RADU BELLER</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>9</td><td>98726.0</td><td></td><td>FOCȘANI - DALI REGENERARE URBANĂ A ZONEI CENTRALE A MUNICIPIULUI FOCȘANI</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>10</td><td>369.0</td><td></td><td>BUCUREȘTI SECTOR 1 - Masterplan de regenerare urbană</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>11</td><td>148799.0</td><td>148799</td><td>BUCUREȘTI SECTOR 3 - PARC PANTELIMON</td><td>422</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>12</td><td>152515.0</td><td>152515</td><td>CONSTANȚA - DALI PT - Inel 2</td><td>199</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>13</td><td>43683.0</td><td></td><td>CONSTANȚA - Greener Cities</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>14</td><td>91670.0</td><td></td><td>FOCȘANI - DALI REABILITARE SI REGENERARE ZONA PARC TEATRU</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>15</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare a Falezei Dunării</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>16</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare Valea Țiglinei</td><td>-</td></tr>
-<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>17</td><td>1478.0</td><td></td><td>PUZ - CAV ADI Bucuresti</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>2</td><td></td><td></td><td>BUCUREȘTI - REAMENAJAREA PARCULUI NAȚIONAL - INSTALAȚII ELECTRICE</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>7</td><td>218424.0</td><td></td><td>BUCUREȘTI SECTOR 3 - PASAJ LAMINORULUI</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>10</td><td>369.0</td><td></td><td>BUCUREȘTI SECTOR 1 - Masterplan de regenerare urbană</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>15</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare a Falezei Dunării</td><td>-</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>16</td><td></td><td></td><td>GALAȚI - Studiu de imagine urbană și viziunea de regenerare Valea Țiglinei</td><td>-</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -111,6 +112,17 @@
                     <table id="tableMasterValid">
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Proiect</th><th onclick="sortTable(this, 5)">COD PROIECT</th></tr></thead>
                         <tbody>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>3</td><td>176240.0</td><td>PIRU</td><td>370</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>4</td><td>160323.0</td><td>ACTUALIZARE POAT CARTIERE REZIDENTIALE</td><td>377</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>5</td><td>16244.0</td><td>SF DAMBU</td><td>451</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>6</td><td>16850.0</td><td>DALI, PT Gradina Publica</td><td>373</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>8</td><td>96.0</td><td>DALI RADU BELLER</td><td>394</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>9</td><td>98726.0</td><td>DALI ZONA CENTRALA</td><td>490</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>11</td><td>148799.0</td><td>Proiectare Parc Pantelimon</td><td>422</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>12</td><td>152515.0</td><td>DALI, PT, AT Zona Inel II</td><td>199</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>13</td><td>43683.0</td><td>Acting Together for Green Cities-identificare zone , planuri conceptuale</td><td>408</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>14</td><td>91670.0</td><td>DALI zona Parc Teatru</td><td>473</td></tr>
+<tr><td>1  REG URBANA US (export) (Col L/S/J)</td><td><span class='status valid'>VALID</span></td><td>17</td><td>1478.0</td><td>PUZ</td><td>316</td></tr>
                         </tbody></table></div></div>
         </div>
 
@@ -118,13 +130,13 @@
     </div>
     <script>
         Chart.register(ChartDataLabels);
-        const exportStats = {"-1": {"valid": 0, "duplicate": 0, "typo": 4, "empty": 3, "notfound": 9}, "0": {"valid": 0, "duplicate": 0, "typo": 4, "empty": 3, "notfound": 9}};
+        const exportStats = {"-1": {"valid": 11, "duplicate": 0, "typo": 0, "empty": 3, "notfound": 2}, "0": {"valid": 11, "duplicate": 0, "typo": 0, "empty": 3, "notfound": 2}};
         const ctx = document.getElementById('pieChart');
         const pieChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Inexistente'],
-                datasets: [{ data: [0, 0, 4, 3, 9], backgroundColor: ['#27ae60', '#9b59b6', '#3498db', '#f39c12', '#e74c3c'], borderWidth: 0 }]
+                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Necorelate'],
+                datasets: [{ data: [11, 0, 0, 3, 2], backgroundColor: ['#27ae60', '#9b59b6', '#3498db', '#f39c12', '#e74c3c'], borderWidth: 0 }]
             },
             options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#aaa' } } } }
         });
@@ -186,6 +198,18 @@
 
             // Re-append sorted rows
             rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function toggleDuplicates() {
+            const list = document.getElementById('duplicate-list');
+            const icon = document.getElementById('dup-toggle');
+            if (list.style.display === 'none') {
+                list.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                list.style.display = 'none';
+                icon.textContent = '▼';
+            }
         }
     </script>
 </body>

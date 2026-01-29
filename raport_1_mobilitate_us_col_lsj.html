@@ -56,6 +56,18 @@
         .registry-item.found { border-left: 3px solid #27ae60; }
         .registry-item.notfound { border-left: 3px solid #e74c3c; }
         .registry-item.nocontract { border-left: 3px solid #f39c12; }
+        .registry-item.duplicate { border-left: 3px solid #e74c3c; background: rgba(231, 76, 60, 0.1); }
+        .registry-item.ok { border-left: 3px solid #27ae60; }
+        .registry-item.total-unique { border-left: 3px solid #3498db; background: rgba(52, 152, 219, 0.1); }
+        .duplicate-warning { margin-top: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; border-radius: 8px; overflow: hidden; }
+        .duplicate-header { padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: #e74c3c; font-weight: 500; }
+        .duplicate-header:hover { background: rgba(231, 76, 60, 0.15); }
+        .toggle-icon { transition: transform 0.3s; }
+        .duplicate-details { padding: 15px; background: rgba(0,0,0,0.2); }
+        .duplicate-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .duplicate-table th { text-align: left; padding: 8px; border-bottom: 1px solid #444; color: #888; }
+        .duplicate-table td { padding: 8px; border-bottom: 1px solid #333; color: #ccc; }
+        .duplicate-table tr:last-child td { border-bottom: none; }
         footer { text-align: center; padding: 20px; color: #666; font-size: 0.85em; }
     </style>
 </head>
@@ -63,7 +75,7 @@
     <div class="container">
         <header>
             <h1>Raport Echipa - 1  MOBILITATE US (Col L/S/J)</h1>
-            <div class="subtitle">Total: 91 intrari | Generat: 29.01.2026 11:01</div>
+            <div class="subtitle">Total: 91 intrari | Generat: 29.01.2026 14:47</div>
         </header>
         
         <div class="dashboard">
@@ -72,7 +84,7 @@
                 <div class="card duplicate"><h2 id="statDuplicate">2</h2><div class="pct" id="pctDuplicate">2.2%</div><p>Duplicate</p></div>
                 <div class="card typo"><h2 id="statTypo">8</h2><div class="pct" id="pctTypo">8.8%</div><p>Posibile Erori</p></div>
                 <div class="card empty"><h2 id="statEmpty">1</h2><div class="pct" id="pctEmpty">1.1%</div><p>Necompletate</p></div>
-                <div class="card notfound"><h2 id="statNotfound">12</h2><div class="pct" id="pctNotfound">13.2%</div><p>Inexistente</p></div>
+                <div class="card notfound"><h2 id="statNotfound">12</h2><div class="pct" id="pctNotfound">13.2%</div><p>Necorelate</p></div>
             </div>
             <div class="chart-container"><canvas id="pieChart" width="250" height="250"></canvas></div>
         </div>
@@ -87,28 +99,28 @@
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th><th onclick="sortTable(this, 6)">COD PROIECT</th></tr></thead>
                         <tbody>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>13</td><td>CDSF4301</td><td>CDSF04301</td><td>BUCURESTI - DTAC PT Relocare troleibuz Unirii</td><td>348</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>15</td><td>CDSF0108</td><td></td><td>BUCURESTI - SPF Aeroport</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>15</td><td>CDSF0108</td><td></td><td>BUCURESTI - SPF Aeroport</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>17</td><td>CDSF0508</td><td>CDSF0508_</td><td>BUCURESTI - STUDIU DE TRAFIC - UNIRII E2</td><td>349</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>34</td><td>106.066</td><td>106066</td><td>CALARASI - DNSH REABILITARE BRAT BORCEA</td><td>432</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>147058</td><td>147.058</td><td>CALARASI STUDII DNSH</td><td>369</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>43</td><td>2023/s 139-445422</td><td>2023/S 139-445422</td><td>CHIȘINĂU - STUDIU DE E-TICKETING</td><td>324</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>45</td><td>264</td><td></td><td>CONSTANTA - CS Autobuze PNRR</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>53</td><td>16</td><td></td><td>DROBETA - SF PT ITS STATII (subco)</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>54</td><td>12598</td><td></td><td>FOCSANI - SF PARCARE LEOPOLDINA</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>59</td><td>4866</td><td></td><td>HOREZU - STUDIU DE TRAFIC</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>61</td><td></td><td></td><td>MODESHIFT - CONCEPT TEHNIC</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>62</td><td>1-7633</td><td></td><td>ODOBESTI - PT INTEGRAT</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>63</td><td>35889</td><td></td><td>PIATRA NEAMT - DALI PT POAT MOBILITATE</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>45</td><td>264</td><td></td><td>CONSTANTA - CS Autobuze PNRR</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>53</td><td>16</td><td></td><td>DROBETA - SF PT ITS STATII (subco)</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>54</td><td>12598</td><td></td><td>FOCSANI - SF PARCARE LEOPOLDINA</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>59</td><td>4866</td><td></td><td>HOREZU - STUDIU DE TRAFIC</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>61</td><td></td><td></td><td>MODESHIFT - CONCEPT TEHNIC</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>62</td><td>1-7633</td><td></td><td>ODOBESTI - PT INTEGRAT</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>63</td><td>35889</td><td></td><td>PIATRA NEAMT - DALI PT POAT MOBILITATE</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>64</td><td>1151/17.09.2025</td><td>12151</td><td>PIATRA NEAMT - DTAC+PT Modificare POAT</td><td>479</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>67</td><td>49</td><td></td><td>RM VALCEA - SO SI STRATEGIE DELEGARE TRANSPORT</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>73</td><td>493</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Baneasa</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>67</td><td>49</td><td></td><td>RM VALCEA - SO SI STRATEGIE DELEGARE TRANSPORT</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>73</td><td>493</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Baneasa</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>74</td><td>495</td><td>4795</td><td>SECTOR 1 - DTAC PT Suprainaltate Bucurestii Noi</td><td>275</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>75</td><td>494</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Grivita</td><td>-</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>76</td><td>491</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Piata Romana</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>75</td><td>494</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Grivita</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>76</td><td>491</td><td></td><td>SECTOR 1 - DTAC PT Suprainaltate Piata Romana</td><td>-</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>79</td><td>2/137516</td><td>137516</td><td>Sector 5 - Treceri de pietoni suprainaltate</td><td>411</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>82</td><td>8810</td><td></td><td>SUCEAVA - CS Autobuze PNRR</td><td>232</td></tr>
 <tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status duplicate'>COD DUPLICAT</span></td><td>85</td><td>8810</td><td></td><td>SUCEAVA - SF PT TP ETAPA 1</td><td>232</td></tr>
-<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>92</td><td>7610</td><td></td><td>VASLUI - SO MICROBUZE SCOLARE</td><td>-</td></tr>
+<tr><td>1  MOBILITATE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>92</td><td>7610</td><td></td><td>VASLUI - SO MICROBUZE SCOLARE</td><td>-</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -198,7 +210,7 @@
         const pieChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Inexistente'],
+                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Necorelate'],
                 datasets: [{ data: [68, 2, 8, 1, 12], backgroundColor: ['#27ae60', '#9b59b6', '#3498db', '#f39c12', '#e74c3c'], borderWidth: 0 }]
             },
             options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#aaa' } } } }
@@ -261,6 +273,18 @@
 
             // Re-append sorted rows
             rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function toggleDuplicates() {
+            const list = document.getElementById('duplicate-list');
+            const icon = document.getElementById('dup-toggle');
+            if (list.style.display === 'none') {
+                list.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                list.style.display = 'none';
+                icon.textContent = '▼';
+            }
         }
     </script>
 </body>

@@ -22,6 +22,11 @@ TARGET_SHEETS = {
 
 def clean_text(value):
     """Applies the same regex cleaner used in the first step"""
+    if pd.isna(value):
+        return ""
+    # Handle float values that are whole numbers (remove .0)
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
     text = str(value)
     if text.lower() in ['nan', 'none', '']:
         return ""
@@ -82,7 +87,7 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
     if missing_from_wrike is None:
         missing_from_wrike = []
     if registry_stats is None:
-        registry_stats = {'total': 0, 'with_contract': 0, 'no_contract': 0, 'found_in_wrike': 0, 'not_in_wrike': 0}
+        registry_stats = {'total_rows': 0, 'with_contract': 0, 'unique_contracts': 0, 'no_contract': 0, 'duplicates': 0, 'duplicate_details': {}, 'total_unique': 0, 'found_in_wrike': 0, 'not_in_wrike': 0}
     if output_file is None:
         output_file = OUTPUT_HTML
     if title is None:
@@ -168,6 +173,18 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
         .registry-item.found {{ border-left: 3px solid #27ae60; }}
         .registry-item.notfound {{ border-left: 3px solid #e74c3c; }}
         .registry-item.nocontract {{ border-left: 3px solid #f39c12; }}
+        .registry-item.duplicate {{ border-left: 3px solid #e74c3c; background: rgba(231, 76, 60, 0.1); }}
+        .registry-item.ok {{ border-left: 3px solid #27ae60; }}
+        .registry-item.total-unique {{ border-left: 3px solid #3498db; background: rgba(52, 152, 219, 0.1); }}
+        .duplicate-warning {{ margin-top: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; border-radius: 8px; overflow: hidden; }}
+        .duplicate-header {{ padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: #e74c3c; font-weight: 500; }}
+        .duplicate-header:hover {{ background: rgba(231, 76, 60, 0.15); }}
+        .toggle-icon {{ transition: transform 0.3s; }}
+        .duplicate-details {{ padding: 15px; background: rgba(0,0,0,0.2); }}
+        .duplicate-table {{ width: 100%; border-collapse: collapse; font-size: 0.9em; }}
+        .duplicate-table th {{ text-align: left; padding: 8px; border-bottom: 1px solid #444; color: #888; }}
+        .duplicate-table td {{ padding: 8px; border-bottom: 1px solid #333; color: #ccc; }}
+        .duplicate-table tr:last-child td {{ border-bottom: none; }}
         footer {{ text-align: center; padding: 20px; color: #666; font-size: 0.85em; }}
     </style>
 </head>
@@ -184,34 +201,61 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
                 <div class="card duplicate"><h2 id="statDuplicate">{total_dup}</h2><div class="pct" id="pctDuplicate">{round(total_dup/total_all*100,1)}%</div><p>Duplicate</p></div>
                 <div class="card typo"><h2 id="statTypo">{total_typo}</h2><div class="pct" id="pctTypo">{round(total_typo/total_all*100,1)}%</div><p>Posibile Erori</p></div>
                 <div class="card empty"><h2 id="statEmpty">{total_empty}</h2><div class="pct" id="pctEmpty">{round(total_empty/total_all*100,1)}%</div><p>Necompletate</p></div>
-                <div class="card notfound"><h2 id="statNotfound">{total_notfound}</h2><div class="pct" id="pctNotfound">{round(total_notfound/total_all*100,1)}%</div><p>Inexistente</p></div>
+                <div class="card notfound"><h2 id="statNotfound">{total_notfound}</h2><div class="pct" id="pctNotfound">{round(total_notfound/total_all*100,1)}%</div><p>Necorelate</p></div>
             </div>
             <div class="chart-container"><canvas id="pieChart" width="250" height="250"></canvas></div>
         </div>
 """
     # Only show registry summary in master report (not for individual team reports)
     if not is_single_team:
+        # Build duplicate details HTML if there are duplicates
+        duplicate_html = ""
+        if registry_stats['duplicates'] > 0:
+            duplicate_rows = ""
+            for contract_code, occurrences in registry_stats['duplicate_details'].items():
+                rows_info = " & ".join([f"Row {o['excel_row']} ({o['project'][:30]}{'...' if len(o['project']) > 30 else ''})" for o in occurrences])
+                duplicate_rows += f"<tr><td><strong>{contract_code}</strong></td><td>{rows_info}</td></tr>"
+
+            duplicate_html = f"""
+            <div class="duplicate-warning">
+                <div class="duplicate-header" onclick="toggleDuplicates()">
+                    <span>⚠️ Contracte Duplicate - acelasi numar folosit pentru proiecte diferite</span>
+                    <span class="toggle-icon" id="dup-toggle">▼</span>
+                </div>
+                <div class="duplicate-details" id="duplicate-list" style="display: none;">
+                    <table class="duplicate-table">
+                        <thead><tr><th>Nr. Contract</th><th>Randuri Excel & Proiecte</th></tr></thead>
+                        <tbody>{duplicate_rows}</tbody>
+                    </table>
+                </div>
+            </div>"""
+
         html += f"""
         <div class="registry-summary">
             <h3>Sumar Registru Contracte</h3>
             <div class="registry-grid">
                 <div class="registry-item total">
-                    <div class="number">{registry_stats['total']}</div>
-                    <div class="label">Total Proiecte in Registru</div>
+                    <div class="number">{registry_stats['total_rows']}</div>
+                    <div class="label">Total Randuri</div>
                 </div>
                 <div class="registry-item found">
-                    <div class="number">{registry_stats['found_in_wrike']}</div>
-                    <div class="label">Gasite in Wrike</div>
-                </div>
-                <div class="registry-item notfound">
-                    <div class="number">{registry_stats['not_in_wrike']}</div>
-                    <div class="label">Negasite in Wrike</div>
+                    <div class="number">{registry_stats['with_contract']}</div>
+                    <div class="label">Cu Nr. Contract</div>
                 </div>
                 <div class="registry-item nocontract">
                     <div class="number">{registry_stats['no_contract']}</div>
                     <div class="label">Fara Nr. Contract</div>
                 </div>
+                <div class="registry-item {'duplicate' if registry_stats['duplicates'] > 0 else 'ok'}">
+                    <div class="number">{registry_stats['duplicates']}{'⚠️' if registry_stats['duplicates'] > 0 else ''}</div>
+                    <div class="label">Contracte Duplicate</div>
+                </div>
+                <div class="registry-item total-unique">
+                    <div class="number">{registry_stats['total_unique']}</div>
+                    <div class="label">Total Proiecte Unice</div>
+                </div>
             </div>
+            {duplicate_html}
         </div>
 """
     # Only show export tabs if there are multiple sheets (master view)
@@ -289,7 +333,7 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
         const pieChart = new Chart(ctx, {{
             type: 'doughnut',
             data: {{
-                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Inexistente'],
+                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Necorelate'],
                 datasets: [{{ data: [{total_valid}, {total_dup}, {total_typo}, {total_empty}, {total_notfound}], backgroundColor: ['#27ae60', '#9b59b6', '#3498db', '#f39c12', '#e74c3c'], borderWidth: 0 }}]
             }},
             options: {{ responsive: true, plugins: {{ legend: {{ position: 'bottom', labels: {{ color: '#aaa' }} }} }} }}
@@ -353,6 +397,18 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
             // Re-append sorted rows
             rows.forEach(row => tbody.appendChild(row));
         }}
+
+        function toggleDuplicates() {{
+            const list = document.getElementById('duplicate-list');
+            const icon = document.getElementById('dup-toggle');
+            if (list.style.display === 'none') {{
+                list.style.display = 'block';
+                icon.textContent = '▲';
+            }} else {{
+                list.style.display = 'none';
+                icon.textContent = '▼';
+            }}
+        }}
     </script>
 </body>
 </html>
@@ -395,12 +451,27 @@ def main():
     missing_in_registry = []
     no_contract_entries = []  # Registry entries without contract numbers
 
+    # Track contract occurrences for duplicate detection
+    contract_occurrences = {}  # {contract_code: [(excel_row, project_name, cod_proiect), ...]}
+    total_rows_with_contract = 0
+
     for index, row in reg_df.iterrows():
         code = clean_text(row[reg_col])
         proj = clean_project_name(row[proj_col])
         cod_proiect = clean_numeric_code(row['COD PROIECT']) if 'COD PROIECT' in reg_df.columns else ""
+        excel_row = index + 2  # +1 for header, +1 for 0-based index
+
         if code:
+            total_rows_with_contract += 1
             valid_codes[code] = proj
+            # Track for duplicate detection
+            if code not in contract_occurrences:
+                contract_occurrences[code] = []
+            contract_occurrences[code].append({
+                'excel_row': excel_row,
+                'project': proj,
+                'cod_proiect': cod_proiect if cod_proiect else "-"
+            })
         else:
             missing_in_registry.append(proj) # Registry has project but no contract code
             # Also track these for the report
@@ -410,7 +481,12 @@ def main():
                     "project": proj,
                     "cod_proiect": cod_proiect if cod_proiect else "-"
                 })
-            
+
+    # Find duplicate contracts (same contract number used for different projects)
+    duplicate_contracts = {code: occurrences for code, occurrences in contract_occurrences.items() if len(occurrences) > 1}
+    duplicate_count = len(duplicate_contracts)
+    print(f"Found {duplicate_count} duplicate contract numbers affecting {sum(len(v) for v in duplicate_contracts.values())} rows")
+
     valid_codes_list = list(valid_codes.keys())
 
     # Build COD PROIECT mapping from the same registry sheet
@@ -482,13 +558,8 @@ def main():
 
                     # 1. Check for Empty
                     if clean_val == "":
-                        # Is this project listed as missing contract in registry?
-                        if any(fuzz.partial_ratio(proj_val, r_proj) > 90 for r_proj in missing_in_registry):
-                            status = "empty"
-                            status_text = "NR CONTRACT ABSENT IN REGISTRU SI IN WRIKE"
-                        else:
-                            status = "empty"
-                            status_text = "NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE"
+                        status = "empty"
+                        status_text = "NR CONTRACT NECOMPLETAT IN WRIKE"
                         stats['empty'] += 1
                         cod_proiect_val = "-"
 
@@ -519,7 +590,7 @@ def main():
                             cod_proiect_val = cod_proiect_map.get(match[0], "-")
                         else:
                             status = "notfound"
-                            status_text = "NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE"
+                            status_text = "NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL"
                             stats['notfound'] += 1
                             cod_proiect_val = "-"
 
@@ -554,9 +625,13 @@ def main():
 
     # Build registry stats for summary
     registry_stats = {
-        'total': len(valid_codes) + len(no_contract_entries),
-        'with_contract': len(valid_codes),
+        'total_rows': len(reg_df),
+        'with_contract': total_rows_with_contract,
+        'unique_contracts': len(valid_codes),
         'no_contract': len(no_contract_entries),
+        'duplicates': duplicate_count,
+        'duplicate_details': duplicate_contracts,
+        'total_unique': len(valid_codes) + len(no_contract_entries),
         'found_in_wrike': len(codes_found_in_wrike),
         'not_in_wrike': len(valid_codes) - len(codes_found_in_wrike)
     }

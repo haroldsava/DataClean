@@ -56,6 +56,18 @@
         .registry-item.found { border-left: 3px solid #27ae60; }
         .registry-item.notfound { border-left: 3px solid #e74c3c; }
         .registry-item.nocontract { border-left: 3px solid #f39c12; }
+        .registry-item.duplicate { border-left: 3px solid #e74c3c; background: rgba(231, 76, 60, 0.1); }
+        .registry-item.ok { border-left: 3px solid #27ae60; }
+        .registry-item.total-unique { border-left: 3px solid #3498db; background: rgba(52, 152, 219, 0.1); }
+        .duplicate-warning { margin-top: 15px; background: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; border-radius: 8px; overflow: hidden; }
+        .duplicate-header { padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: #e74c3c; font-weight: 500; }
+        .duplicate-header:hover { background: rgba(231, 76, 60, 0.15); }
+        .toggle-icon { transition: transform 0.3s; }
+        .duplicate-details { padding: 15px; background: rgba(0,0,0,0.2); }
+        .duplicate-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .duplicate-table th { text-align: left; padding: 8px; border-bottom: 1px solid #444; color: #888; }
+        .duplicate-table td { padding: 8px; border-bottom: 1px solid #333; color: #ccc; }
+        .duplicate-table tr:last-child td { border-bottom: none; }
         footer { text-align: center; padding: 20px; color: #666; font-size: 0.85em; }
     </style>
 </head>
@@ -63,7 +75,7 @@
     <div class="container">
         <header>
             <h1>Raport Echipa - 2  PROIECTE US (Col L/S/J)</h1>
-            <div class="subtitle">Total: 55 intrari | Generat: 29.01.2026 11:01</div>
+            <div class="subtitle">Total: 55 intrari | Generat: 29.01.2026 14:47</div>
         </header>
         
         <div class="dashboard">
@@ -72,7 +84,7 @@
                 <div class="card duplicate"><h2 id="statDuplicate">0</h2><div class="pct" id="pctDuplicate">0.0%</div><p>Duplicate</p></div>
                 <div class="card typo"><h2 id="statTypo">3</h2><div class="pct" id="pctTypo">5.5%</div><p>Posibile Erori</p></div>
                 <div class="card empty"><h2 id="statEmpty">25</h2><div class="pct" id="pctEmpty">45.5%</div><p>Necompletate</p></div>
-                <div class="card notfound"><h2 id="statNotfound">4</h2><div class="pct" id="pctNotfound">7.3%</div><p>Inexistente</p></div>
+                <div class="card notfound"><h2 id="statNotfound">4</h2><div class="pct" id="pctNotfound">7.3%</div><p>Necorelate</p></div>
             </div>
             <div class="chart-container"><canvas id="pieChart" width="250" height="250"></canvas></div>
         </div>
@@ -86,38 +98,38 @@
                     <table id="tableMasterProb">
                         <thead><tr><th onclick="sortTable(this, 0)">Sursa</th><th onclick="sortTable(this, 1)">Status</th><th onclick="sortTable(this, 2)">Linie</th><th onclick="sortTable(this, 3)">NR CONTRACT</th><th onclick="sortTable(this, 4)">Sugestie</th><th onclick="sortTable(this, 5)">Proiect</th><th onclick="sortTable(this, 6)">COD PROIECT</th></tr></thead>
                         <tbody>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>2</td><td>1320/01</td><td></td><td>AFER - SF HALA FAUREI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>4</td><td>8599</td><td></td><td>ALEXANDRIA PT Pietonal</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>7</td><td>Q213.00_0707.D</td><td></td><td>BACAU - DTAC+PT Sistematizare si Peisagere Campus</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Alte studii conform CU: nZEB</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>13</td><td></td><td></td><td>Audit energetic - se preda la asistenta tehnica</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>14</td><td></td><td></td><td>Capitolul privind economia circulara</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>15</td><td></td><td></td><td>Documentatie emitere CU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>16</td><td></td><td></td><td>Documentatii avize PSI si protectie civila</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>17</td><td></td><td></td><td>Documentatii avize si acorduri</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>18</td><td></td><td></td><td>DTAC + DTOE (Verificate)</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>19</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>20</td><td></td><td></td><td>PT (Verificat)</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>21</td><td></td><td></td><td>Standarde si proceduri mentenanta</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>22</td><td></td><td></td><td>Studii pentru obtinerea acordurilor/avizelor de mediu</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>23</td><td></td><td></td><td>Studiu de fezabilitate</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>24</td><td></td><td></td><td>Studiu de impact Arhitectural si Urbanistic</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>25</td><td></td><td></td><td>Studiu de TRAFIC si calculul emisiilor GES</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>26</td><td></td><td></td><td>Studiu DNSH si imunizare</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>27</td><td></td><td></td><td>Studiu GEO</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>28</td><td></td><td></td><td>Studiu privind utilizarea unor sisteme alternative</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>29</td><td></td><td></td><td>Studiu TOPO</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>32</td><td></td><td></td><td>1. IMPARTIRE ACTIVITATI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>33</td><td></td><td></td><td>2. OBTINERE CERTIFICAT DE URBANISM</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>34</td><td></td><td></td><td>3. EXPERTIZA TEHNICA</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>35</td><td></td><td></td><td>4. DALI</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>36</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>2</td><td>1320/01</td><td></td><td>AFER - SF HALA FAUREI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>4</td><td>8599</td><td></td><td>ALEXANDRIA PT Pietonal</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>7</td><td>Q213.00_0707.D</td><td></td><td>BACAU - DTAC+PT Sistematizare si Peisagere Campus</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>12</td><td></td><td></td><td>Alte studii conform CU: nZEB</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>13</td><td></td><td></td><td>Audit energetic - se preda la asistenta tehnica</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>14</td><td></td><td></td><td>Capitolul privind economia circulara</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>15</td><td></td><td></td><td>Documentatie emitere CU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>16</td><td></td><td></td><td>Documentatii avize PSI si protectie civila</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>17</td><td></td><td></td><td>Documentatii avize si acorduri</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>18</td><td></td><td></td><td>DTAC + DTOE (Verificate)</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>19</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>20</td><td></td><td></td><td>PT (Verificat)</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>21</td><td></td><td></td><td>Standarde si proceduri mentenanta</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>22</td><td></td><td></td><td>Studii pentru obtinerea acordurilor/avizelor de mediu</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>23</td><td></td><td></td><td>Studiu de fezabilitate</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>24</td><td></td><td></td><td>Studiu de impact Arhitectural si Urbanistic</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>25</td><td></td><td></td><td>Studiu de TRAFIC si calculul emisiilor GES</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>26</td><td></td><td></td><td>Studiu DNSH si imunizare</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>27</td><td></td><td></td><td>Studiu GEO</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>28</td><td></td><td></td><td>Studiu privind utilizarea unor sisteme alternative</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>29</td><td></td><td></td><td>Studiu TOPO</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>32</td><td></td><td></td><td>1. IMPARTIRE ACTIVITATI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>33</td><td></td><td></td><td>2. OBTINERE CERTIFICAT DE URBANISM</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>34</td><td></td><td></td><td>3. EXPERTIZA TEHNICA</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>35</td><td></td><td></td><td>4. DALI</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>36</td><td></td><td></td><td>PONTAJ</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>38</td><td>80/149560/</td><td>80/149560</td><td>EXPERTIZE TEHNICE SCOALA 126&103</td><td>420</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>40</td><td></td><td></td><td>HOREZU - DTAC SPITAL</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>40</td><td></td><td></td><td>HOREZU - DTAC SPITAL</td><td>-</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>47</td><td>2/137516</td><td>137516</td><td>Sector 5 - PT Scoala 103</td><td>411</td></tr>
 <tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status typo'>POSIBILA EROARE DE TASTARE</span></td><td>48</td><td>2/137516</td><td>137516</td><td>Sector 5 - PT Scoala 126</td><td>411</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT PREZENT IN REGISTRU / ABSENT IN WRIKE</span></td><td>51</td><td></td><td></td><td>SF CAV BUZAU</td><td>-</td></tr>
-<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT ABSENT IN REGISTRU DAR PREZENT IN WRIKE</span></td><td>53</td><td>144-13476-RU13477</td><td></td><td>SF DALI Centru str. Muntii carpati S5 PIDS</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status empty'>NR CONTRACT NECOMPLETAT IN WRIKE</span></td><td>51</td><td></td><td></td><td>SF CAV BUZAU</td><td>-</td></tr>
+<tr><td>2  PROIECTE US (export) (Col L/S/J)</td><td><span class='status notfound'>NR CONTRACT DIN WRIKE NECORELAT CU REGISTRUL</span></td><td>53</td><td>144-13476-RU13477</td><td></td><td>SF DALI Centru str. Muntii carpati S5 PIDS</td><td>-</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -162,7 +174,7 @@
         const pieChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Inexistente'],
+                labels: ['Valide', 'Duplicate', 'Erori', 'Necompletate', 'Necorelate'],
                 datasets: [{ data: [23, 0, 3, 25, 4], backgroundColor: ['#27ae60', '#9b59b6', '#3498db', '#f39c12', '#e74c3c'], borderWidth: 0 }]
             },
             options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#aaa' } } } }
@@ -225,6 +237,18 @@
 
             // Re-append sorted rows
             rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function toggleDuplicates() {
+            const list = document.getElementById('duplicate-list');
+            const icon = document.getElementById('dup-toggle');
+            if (list.style.display === 'none') {
+                list.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                list.style.display = 'none';
+                icon.textContent = '▼';
+            }
         }
     </script>
 </body>
