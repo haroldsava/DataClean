@@ -418,7 +418,7 @@ def generate_html(data, stats, all_exports, missing_from_wrike=None, registry_st
     print(f"Report generated successfully: {output_file}")
 
 
-def export_valid_to_excel(codes_found, registry_full, output_file):
+def export_valid_to_excel(codes_found, registry_full, wrike_names, output_file):
     """Exports valid entries to Excel for accounting."""
     export_data = []
     for code in sorted(codes_found):
@@ -427,7 +427,8 @@ def export_valid_to_excel(codes_found, registry_full, output_file):
             export_data.append({
                 'Cod proiect': row['cod_proiect'],
                 'Numar Contract': row['numar_contract'],
-                'Nume Proiect': row['nume_proiect'],
+                'Nume Proiect (Registru)': row['nume_proiect'],
+                'Nume Proiect (Wrike)': wrike_names.get(code, ''),
                 'Data Contract': row['data_contract']
             })
 
@@ -520,6 +521,7 @@ def main():
     report_stats = {}
     all_exports = []
     codes_found_in_wrike = set()  # Track which registry codes are found in Wrike
+    wrike_names = {}  # Track Wrike project names: {contract_code: wrike_project_name}
 
     for sheet_name, cols_to_check in TARGET_SHEETS.items():
         if sheet_name not in wrike_sheets:
@@ -566,6 +568,8 @@ def main():
                     # 2. Check for Exact Match
                     elif clean_val in valid_codes:
                         codes_found_in_wrike.add(clean_val)  # Track this code as found
+                        if clean_val not in wrike_names:
+                            wrike_names[clean_val] = proj_val  # Store Wrike project name (first occurrence)
                         if value_counts[clean_val] > 1:
                             status = "duplicate"
                             status_text = "COD DUPLICAT"
@@ -583,6 +587,8 @@ def main():
                         match = process.extractOne(clean_val, valid_codes_list, scorer=fuzz.ratio)
                         if match and match[1] >= 85: # 85% similarity threshold
                             codes_found_in_wrike.add(match[0])  # Track suggested code as found
+                            if match[0] not in wrike_names:
+                                wrike_names[match[0]] = proj_val  # Store Wrike project name (first occurrence)
                             status = "typo"
                             status_text = "POSIBILA EROARE DE TASTARE"
                             suggest = match[0]
@@ -652,7 +658,7 @@ def main():
                           title=f"Raport Echipa - {team_name}")
 
     # Export valid entries to Excel for accounting
-    export_valid_to_excel(codes_found_in_wrike, registry_full, OUTPUT_EXCEL)
+    export_valid_to_excel(codes_found_in_wrike, registry_full, wrike_names, OUTPUT_EXCEL)
 
 if __name__ == "__main__":
     main()
